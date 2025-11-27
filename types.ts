@@ -1,3 +1,4 @@
+
 /**
  * @file types.ts
  * @description Type definitions for the Polacam application.
@@ -13,6 +14,12 @@ export enum FilterType {
   COOL = 'Cool',
 }
 
+export enum FrameType {
+  SQUARE = 'Square', // Classic 1:1
+  MINI = 'Mini',     // Portrait (Credit card size)
+  WIDE = 'Wide',     // Landscape
+}
+
 export interface EditConfig {
   x: number;
   y: number;
@@ -20,6 +27,7 @@ export interface EditConfig {
   rotation: number;
   caption: string;
   filter: FilterType;
+  frameType: FrameType;
 }
 
 export interface Photo {
@@ -29,6 +37,7 @@ export interface Photo {
   createdAt: number;
   caption?: string;
   filter: FilterType;
+  frameType: FrameType;
 }
 
 export interface CameraState {

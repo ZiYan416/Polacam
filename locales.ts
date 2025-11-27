@@ -1,3 +1,4 @@
+
 /**
  * @file locales.ts
  * @description Translation strings for English and Chinese.
@@ -7,95 +8,107 @@ import { Language } from './types';
 
 export const translations = {
   en: {
-    appTitle: "Polacam",
-    tagline: "OneStep",
-    memories: "memories",
-    takePhoto: "Take Photo",
-    printPhoto: "PRINT PHOTO",
-    cancel: "Cancel",
-    zoom: "Zoom",
-    rotate: "Rotate 90°",
-    rotateShort: "Rotate",
-    filters: "Filters",
-    caption: "Caption",
-    captionPlaceholder: "Add a date or note...",
-    galleryTitle: "Photo Wall",
-    noPhotos: "No photos yet. Start snapping!",
-    download: "Download",
-    saveToGallery: "Save",
-    saved: "Saved!",
-    delete: "Discard",
-    confirmDelete: "Are you sure you want to discard this memory?",
-    editorTitle: "Darkroom",
-    frameLabel: "FRAME",
-    dragHint: "Drag to Adjust",
+    appTitle: "POLACAM",
+    tagline: "DIGITAL ANALOG",
+    memories: "Vibes",
+    takePhoto: "SNAP",
+    printPhoto: "PRINT IT",
+    cancel: "Nah",
+    zoom: "Scale",
+    rotate: "Turn",
+    rotateShort: "Rot",
+    filters: "Moods",
+    frame: "Ratio",
+    caption: "Tag",
+    captionPlaceholder: "Date / Mood / Vibe...",
+    galleryTitle: "My Collection",
+    noPhotos: "Empty roll. Go snap some vibes!",
+    download: "Save Image",
+    saveToGallery: "Keep",
+    saved: "Kept!",
+    delete: "Trash",
+    confirmDelete: "Delete this vibe? No going back.",
+    editorTitle: "Edit Lab",
+    frameLabel: "VIEWFINDER",
+    dragHint: "Drag / Pinch",
     nav: {
-      camera: "Studio",
-      gallery: "Gallery"
+      camera: "Cam",
+      gallery: "Vibes"
     },
     guide: {
-      title: "Welcome to Polacam",
-      step1: "Tap the Red Button to take a shot",
-      step2: "Edit, Filter & Caption in the Darkroom",
-      step3: "Watch it develop & Drag your photo anywhere!",
-      button: "Let's Go!"
+      title: "Yo, Welcome to Polacam",
+      step1: "Hit the red button to Snap.",
+      step2: "Customize your film stock & mood.",
+      step3: "Watch it fly out & Keep what you love.",
+      button: "Start Snapping"
     },
     filtersList: {
-      Normal: "Normal",
-      "B&W": "B&W",
-      Sepia: "Sepia",
-      Vintage: "Vintage",
-      Cool: "Cool"
+      Normal: "Raw",
+      "B&W": "Noir",
+      Sepia: "1990s",
+      Vintage: "Retro",
+      Cool: "Chill"
+    },
+    framesList: {
+      Square: "Classic",
+      Mini: "Instax",
+      Wide: "Wide"
     },
     presets: [
-      "Summer Vibes", "Good Times", "Wanderlust", "Pure Joy", "Dream Big",
-      "Stay Wild", "Memories", "Golden Hour", "Forever", "Love This"
+      "Core Memory 🔒", "Main Character Energy ✨", "Touch Grass 🌿", "Chaos Mode ⚡️", "Vibe Check",
+      "Pov: You're here", "Living Rent Free", "Serotonin Boost", "No Thoughts", "Just Vibes"
     ]
   },
   zh: {
-    appTitle: "Polacam",
-    tagline: "拍立得",
-    memories: "张回忆",
-    takePhoto: "拍照",
-    printPhoto: "冲印照片",
-    cancel: "取消",
+    appTitle: "POLACAM",
+    tagline: "赛博拍立得",
+    memories: "张碎片",
+    takePhoto: "咔嚓",
+    printPhoto: "出片",
+    cancel: "算了",
     zoom: "缩放",
-    rotate: "旋转 90°",
-    rotateShort: "旋转",
-    filters: "滤镜",
-    caption: "标注",
-    captionPlaceholder: "添加日期或心情...",
-    galleryTitle: "照片墙",
-    noPhotos: "暂无照片，快去拍摄第一张吧！",
-    download: "下载原图",
+    rotate: "旋转",
+    rotateShort: "转",
+    filters: "氛围感",
+    frame: "画幅",
+    caption: "日签",
+    captionPlaceholder: "记录此刻的心情...",
+    galleryTitle: "碎片收集",
+    noPhotos: "胶卷空空如也，去捕捉瞬间吧",
+    download: "保存原图",
     saveToGallery: "收藏",
     saved: "已收藏",
     delete: "丢弃",
-    confirmDelete: "确定要丢弃这张回忆吗？",
-    editorTitle: "暗房",
+    confirmDelete: "确定要丢弃这张碎片吗？无法找回哦。",
+    editorTitle: "修图室",
     frameLabel: "取景框",
-    dragHint: "拖动调整位置",
+    dragHint: "拖拽 / 双指缩放",
     nav: {
-      camera: "相机",
+      camera: "拍摄",
       gallery: "相册"
     },
     guide: {
-      title: "欢迎来到 Polacam",
-      step1: "点击红色快门按钮拍摄照片",
-      step2: "在暗房中裁剪、滤镜与手写标注",
-      step3: "等待显影，照片可自由拖动摆放！",
-      button: "开始体验"
+      title: "Polacam 操作指南",
+      step1: "点击底部红钮，捕捉瞬间。",
+      step2: "在修图室调整画幅、滤镜与文案。",
+      step3: "照片弹出后，点击红心收藏喜欢的碎片。",
+      button: "开始记录"
     },
     filtersList: {
       Normal: "原片",
       "B&W": "黑白",
-      Sepia: "怀旧",
+      Sepia: "胶片",
       Vintage: "复古",
-      Cool: "冷调"
+      Cool: "清冷"
+    },
+    framesList: {
+      Square: "经典方",
+      Mini: "三寸",
+      Wide: "宽幅"
     },
     presets: [
-      "夏日限定", "美好时光", "诗与远方", "简单的快乐", "追梦",
-      "保持热爱", "独家记忆", "日落跌进星河", "永远热泪盈眶", "喜欢"
+      "今日份甜 🍭", "这是什么神仙滤镜", "保持热爱 奔赴山海", "落日归山海 🌄", "碎片 +1",
+      "营业一下 📸", "好心情加载中...", "又是被治愈的一天", "Stay Real", "Life is Good"
     ]
   }
 };
