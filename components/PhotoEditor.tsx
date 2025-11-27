@@ -26,12 +26,39 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({ file, onConfirm, onCancel, la
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
 
+  // Load image and Auto-Fit
   useEffect(() => {
     const url = URL.createObjectURL(file);
     setImageUrl(url);
+
+    // Auto fit logic
+    const img = new Image();
+    img.onload = () => {
+       // Get frame dimensions
+       const frame = FRAME_DIMENSIONS[selectedFrame];
+       // We want the image to cover roughly the "photo area" of the frame.
+       // The photo area is defined by photoSize.
+       // Let's approximate a good fit: minimal scale to cover the hole.
+       // Actually, "Contain" is usually safer for initial view.
+       
+       // Heuristic: Set scale so the image shortest side is ~500px (approx frame width)
+       const minSide = Math.min(img.width, img.height);
+       const targetSize = frame.photoSize; 
+       
+       // Initial scale: Fit the image so it covers the frame width
+       let initScale = targetSize / minSide;
+       
+       // Ensure it's not too small or too big
+       initScale = Math.max(0.1, initScale);
+       
+       setScale(initScale);
+    };
+    img.src = url;
+
     return () => URL.revokeObjectURL(url);
-  }, [file]);
+  }, [file, selectedFrame]);
 
   const getClientPos = (e: React.MouseEvent | React.TouchEvent) => {
     if ('touches' in e && e.touches.length > 0) {
@@ -85,9 +112,9 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({ file, onConfirm, onCancel, la
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md animate-fade-in p-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md animate-fade-in p-4">
       {/* Centered Modal Card */}
-      <div className="flex flex-col md:flex-row w-full max-w-5xl h-[85vh] md:h-auto md:max-h-[800px] bg-[#1a1a1a] rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10">
+      <div className="flex flex-col md:flex-row w-full max-w-5xl h-[85vh] md:h-auto md:max-h-[800px] bg-[#1a1a1a] rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10 relative">
         
         {/* --- Top/Left: Canvas Preview --- */}
         <div 
@@ -119,11 +146,14 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({ file, onConfirm, onCancel, la
           </div>
 
           {/* Image Layer */}
+          {/* CRITICAL: The transform order here (translate -> rotate -> scale) MUST match services/imageProcessing.ts */}
           <div className="absolute top-1/2 left-1/2 w-0 h-0 flex items-center justify-center pointer-events-none">
             <img 
+              ref={imageRef}
               src={imageUrl} 
               alt="Preview"
               style={{
+                // CSS Transform Order: Translate first (applied to element axes), then Rotate, then Scale.
                 transform: `translate(${position.x}px, ${position.y}px) rotate(${rotation}deg) scale(${scale})`,
                 filter: selectedFilter !== FilterType.NORMAL 
                   ? (selectedFilter === FilterType.GRAYSCALE ? 'grayscale(100%)' 
@@ -179,7 +209,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({ file, onConfirm, onCancel, la
                  <span className="text-white font-mono">{Math.round(scale * 100)}%</span>
                </div>
                <input 
-                  type="range" min="0.5" max="3" step="0.1" value={scale}
+                  type="range" min="0.1" max="2.0" step="0.05" value={scale}
                   onChange={(e) => setScale(parseFloat(e.target.value))}
                   className="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-white"
                />

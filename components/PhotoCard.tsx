@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Photo } from '../types';
 import { Download, Trash2, Heart } from 'lucide-react';
@@ -40,7 +41,7 @@ const PhotoCard: React.FC<PhotoCardProps> = ({
 
   return (
     <div className={`relative group bg-white shadow-xl hover:shadow-2xl transition-all duration-300 transform select-none ${className}`}>
-      <div className="p-4 pb-12 flex flex-col items-center">
+      <div className="p-4 pb-0 flex flex-col items-center">
         
         {/* Photo Container */}
         <div className="bg-gray-900 w-full aspect-square mb-4 overflow-hidden shadow-inner relative">
@@ -48,7 +49,6 @@ const PhotoCard: React.FC<PhotoCardProps> = ({
             src={photo.dataUrl} 
             alt="Polaroid" 
             className={`w-full h-full object-cover transition-all duration-[3000ms] ease-out ${isDeveloping ? 'animate-develop' : ''}`}
-            // Using a clip-path to show only the photo part during development simulation
             style={isDeveloping ? { clipPath: 'inset(14% 6% 22% 6%)' } : {}}
             draggable={false}
           />
@@ -64,42 +64,53 @@ const PhotoCard: React.FC<PhotoCardProps> = ({
              />
         </div>
 
-        {/* Actions - Always visible on touch, hover on desktop */}
-        <div className="absolute -right-4 top-4 flex flex-col space-y-2 z-20 pointer-events-auto">
+        {/* --- Action Buttons (Bottom Chin) --- */}
+        {/* We place them in the bottom padding area (approx 140px-160px height in logic). 
+            In the rendered image it's just the bottom part. 
+            We absolute position them at the bottom. */}
+        <div className="absolute bottom-4 left-0 right-0 flex justify-center items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 pointer-events-auto">
           
           {/* Save Button (Only for floating photos) */}
           {onSave && (
              <button 
                 onClick={handleSave}
                 disabled={isSaved}
-                className={`p-2.5 rounded-full shadow-lg transition-all transform hover:scale-110 active:scale-95
-                  ${isSaved ? 'bg-red-500 text-white' : 'bg-white text-gray-600 hover:text-red-500'}
+                className={`p-2 rounded-full border border-gray-200 shadow-sm transition-all transform hover:scale-110 active:scale-95
+                  ${isSaved ? 'bg-red-50 text-red-500 border-red-200' : 'bg-white/80 backdrop-blur-sm text-gray-500 hover:text-red-500 hover:bg-white'}
                 `}
                 title="Save to Gallery"
              >
-                <Heart size={20} fill={isSaved ? "currentColor" : "none"} />
+                <Heart size={16} fill={isSaved ? "currentColor" : "none"} />
              </button>
           )}
 
           <button 
             onClick={handleDownload}
-            className="p-2.5 bg-white rounded-full shadow-lg hover:bg-gray-50 text-gray-700 transition-all transform hover:scale-110 active:scale-95"
+            className="p-2 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-full shadow-sm hover:bg-white text-gray-500 hover:text-blue-500 transition-all transform hover:scale-110 active:scale-95"
             title="Download"
           >
-            <Download size={20} />
+            <Download size={16} />
           </button>
           
           {onDelete && (
             <button 
                 onClick={handleDelete}
-                className="p-2.5 bg-white rounded-full shadow-lg hover:bg-red-50 text-red-500 transition-all transform hover:scale-110 active:scale-95"
+                className="p-2 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-full shadow-sm hover:bg-white text-gray-500 hover:text-red-500 transition-all transform hover:scale-110 active:scale-95"
                 title="Delete"
             >
-                <Trash2 size={20} />
+                <Trash2 size={16} />
             </button>
           )}
         </div>
+        
+        {/* Mobile touch hint (Always visible if touch, handled by parent hover usually on desktop) */}
+        {/* In mobile, we might want buttons always visible? 
+            For now, group-hover works on tap on many devices. 
+            To be safe, we can make them visible if 'isDeveloping' is false.
+        */}
       </div>
+      {/* Spacer to simulate bottom chin height in DOM flow if needed, but the image takes space */}
+      <div className="h-12 w-full"></div>
     </div>
   );
 };

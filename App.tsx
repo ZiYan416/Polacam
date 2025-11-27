@@ -96,27 +96,6 @@ function App() {
       {/* --- Overlays --- */}
       {showGuide && <Guide onDismiss={() => setShowGuide(false)} lang={lang} />}
       
-      {selectedFile && (
-        <PhotoEditor 
-          file={selectedFile} 
-          onConfirm={handlePrint} 
-          onCancel={() => setSelectedFile(null)} 
-          lang={lang}
-        />
-      )}
-
-      {/* Floating Photos (Z-Index High) - Only visible in Camera View */}
-      {currentView === 'camera' && floatingPhotos.map((photo) => (
-        <DraggablePhoto 
-          key={photo.id} 
-          photo={photo} 
-          initialX={ejectOrigin.x} 
-          initialY={ejectOrigin.y}
-          onDelete={(id) => setFloatingPhotos(prev => prev.filter(p => p.id !== id))}
-          onSave={handleSaveToGallery}
-        />
-      ))}
-
       {/* --- Header --- */}
       <header className="absolute top-0 left-0 right-0 z-30 p-4 flex justify-between items-center pointer-events-none">
         {/* Title */}
@@ -161,6 +140,18 @@ function App() {
           </div>
         )}
 
+        {/* Floating Photos (Z-Index High) - Only visible in Camera View */}
+        {currentView === 'camera' && floatingPhotos.map((photo) => (
+          <DraggablePhoto 
+            key={photo.id} 
+            photo={photo} 
+            initialX={ejectOrigin.x} 
+            initialY={ejectOrigin.y}
+            onDelete={(id) => setFloatingPhotos(prev => prev.filter(p => p.id !== id))}
+            onSave={handleSaveToGallery}
+          />
+        ))}
+
         {/* VIEW: CAMERA (Always at bottom) */}
         <div className="absolute bottom-0 left-0 right-0 z-10 flex flex-col items-center justify-end">
             {/* The Camera Component */}
@@ -174,6 +165,16 @@ function App() {
         </div>
 
       </main>
+
+      {/* Editor Modal (Highest Z-Index, placed last) */}
+      {selectedFile && (
+        <PhotoEditor 
+          file={selectedFile} 
+          onConfirm={handlePrint} 
+          onCancel={() => setSelectedFile(null)} 
+          lang={lang}
+        />
+      )}
     </div>
   );
 }

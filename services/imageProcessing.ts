@@ -89,17 +89,6 @@ export const generatePolaroid = async (
   const img = await loadImage(objectUrl);
   URL.revokeObjectURL(objectUrl);
 
-  // For the inner photo, we use the specific photoSize for that frame type.
-  // Note: For WIDE, photoSize implies width, need to calculate height or assume square crop logic modified.
-  // To keep it simple, we treat dims.photoSize as width, and calculate height based on frame.
-  
-  // Actually, let's look at FRAME_DIMENSIONS logic.
-  // Classic: 600w, 520 photo (Square-ish)
-  // Mini: 430w, 370 photo (Vertical)
-  // Wide: 860w, 780 photo (Horizontal)
-  
-  // We need an explicit photo aspect ratio for the cutout.
-  // Let's deduce height from padding.
   const photoW = dims.photoSize;
   const photoH = dims.height - dims.topPad - dims.bottomPad;
 
@@ -114,13 +103,24 @@ export const generatePolaroid = async (
   photoCtx.fillRect(0, 0, photoW, photoH);
 
   photoCtx.save();
-  photoCtx.translate(photoW / 2, photoH / 2);
+  
+  // Transformation Matrix matching CSS:
+  // CSS: translate(x, y) rotate(r) scale(s)
+  // This physically translates the element (moving its origin), then rotates it, then scales it.
+  // In Canvas, we start at Center (since CSS transform-origin is usually center).
+  
+  // 1. Move to Center + Offset (Global translation)
+  photoCtx.translate((photoW / 2) + config.x, (photoH / 2) + config.y);
+  
+  // 2. Rotate (at the new origin)
   photoCtx.rotate((config.rotation * Math.PI) / 180);
+  
+  // 3. Scale (at the new origin)
   photoCtx.scale(config.scale, config.scale);
-  photoCtx.translate(config.x, config.y);
-
-  // Draw image centered
+  
+  // 4. Draw image centered at the origin
   photoCtx.drawImage(img, -img.width / 2, -img.height / 2);
+  
   photoCtx.restore();
 
   applyFilterToContext(photoCtx, photoW, photoH, config.filter);
