@@ -1,0 +1,5 @@
+{
+  "name": "Polacam",
+  "description": "An interactive retro Polaroid-style camera app with real-time filters, printing animations, and a digital photo wall.",
+  "requestFramePermissions": []
+}

@@ -1,11 +1,91 @@
-<div align="center">
+# Polacam 📸
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+> **Interactive Retro Instant Camera for Web**  
+> A React-based application that simulates the experience of a Polaroid camera, featuring realistic developing animations, photo editing (Crop/Rotate/Filter), and a persistent photo gallery.
 
-  <h1>Built with AI Studio</h2>
+---
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+## 📖 Introduction (简介)
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+**English**  
+Polacam is a web application designed to bring the nostalgia of instant photography to the browser. Users can upload photos, edit them in a virtual "Darkroom" (Crop, Rotate, Add Captions), and watch as the camera "prints" the photo with a mechanical animation. The result is a processed image with retro borders, texture, and filters, saved to a local gallery.
 
-</div>
+**中文**  
+Polacam 是一个旨在将即时摄影的怀旧感带入浏览器的 Web 应用程序。用户可以上传照片，在虚拟“暗房”中进行编辑（裁剪、旋转、添加文字），并观看相机以机械动画形式“吐出”照片。最终生成带有复古边框、纹理和滤镜的照片，并保存到本地画廊。
+
+---
+
+## ✨ Features (功能特性)
+
+1.  **Retro Camera UI**: A purely CSS/SVG constructed camera interface with interactive buttons and shutter animations.
+    *   *复古相机界面*：纯 CSS/SVG 构建的相机模型，具有交互式按钮和快门动画。
+2.  **Advanced Photo Editor**: Built-in editor to zoom, pan, rotate, and crop images before printing.
+    *   *高级照片编辑器*：内置编辑器，可在打印前缩放、平移、旋转和裁剪图像。
+3.  **Real-time Filters**: Pixel-level manipulation using HTML5 Canvas API (Grayscale, Sepia, Vintage, Cool).
+    *   *实时滤镜*：使用 HTML5 Canvas API 进行像素级处理（黑白、复古、冷色调等）。
+4.  **Printing Animation**: Realistic CSS animations simulating the photo ejection and slow chemical development process.
+    *   *打印动画*：逼真的 CSS 动画，模拟照片吐出和缓慢显影的过程。
+5.  **Local Storage Gallery**: Photos are persisted in the browser's LocalStorage.
+    *   *本地存储画廊*：照片持久化保存在浏览器的 LocalStorage 中。
+
+---
+
+## 🛠 Tech Stack (技术栈)
+
+*   **Frontend Framework**: React 18 (Hooks, Functional Components)
+*   **Styling**: Tailwind CSS (Utility-first styling)
+*   **Icons**: Lucide React
+*   **Graphics Core**: Native HTML5 Canvas API (No heavy external graphics libraries used for performance optimization)
+    *   *Note*: While Fabric.js was considered, direct Canvas API usage provided a lighter bundle size and finer control over the specific pixel-manipulation required for the filters.
+
+---
+
+## 📂 Project Structure (项目结构)
+
+```
+/
+├── components/          # React UI Components
+│   ├── Camera.tsx       # The main SVG/CSS interactive camera
+│   ├── PhotoEditor.tsx  # Modal for cropping/rotating/captioning
+│   ├── PhotoCard.tsx    # Display component for individual polaroids
+│   └── Gallery.tsx      # Grid layout for the photo wall
+├── services/
+│   ├── imageProcessing.ts # Core logic for Canvas manipulation & Filters
+│   └── storageService.ts  # LocalStorage wrapper (Mock Backend)
+├── constants.ts         # Configuration constants (Dimensions, Strings)
+├── types.ts             # TypeScript interfaces and Enums
+├── App.tsx              # Main controller
+└── index.tsx            # Entry point
+```
+
+---
+
+## 🚀 Usage Guide (使用指南)
+
+1.  **Take a Photo**: Click the red shutter button on the camera.
+2.  **Select File**: Choose an image from your device.
+3.  **Edit**:
+    *   **Drag** the image to position it within the square frame.
+    *   Use the **Slider** to Zoom in/out.
+    *   Click **Rotate** to change orientation.
+    *   Select a **Filter** (e.g., Vintage, B&W).
+    *   Type a **Caption** (or leave blank for the current date).
+4.  **Print**: Click "PRINT PHOTO".
+5.  **Wait**: Watch the animation as the photo ejects and develops.
+6.  **Save**: The photo is automatically saved to the gallery below. You can download it by hovering over the photo card.
+
+---
+
+## 🔧 Developer Notes (开发者说明)
+
+### Canvas Manipulation (`imageProcessing.ts`)
+The app uses a strict 2-stage canvas process:
+1.  **Composition**: A temporary canvas crops and transforms the source image based on the user's edit config (`x`, `y`, `scale`, `rotation`).
+2.  **Assembly**: The transformed image is drawn onto a larger "Paper" canvas, where textures, shadows, and text are applied.
+
+### Responsive Design
+The app is built with mobile-first Tailwind classes. The Camera component scales using CSS transforms, and the Photo Editor is responsive to viewport size.
+
+---
+
+*Generated by AI for Polacam Project.*
