@@ -6,8 +6,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { FilterType, EditConfig, Language } from '../types';
-import { t } from '../locales';
-import { X, Check, RotateCw, ZoomIn, Type, Wand2, Grid3X3, Hand } from 'lucide-react';
+import { t, getRandomCaption } from '../locales';
+import { X, Check, RotateCw, ZoomIn, Type, Wand2, Grid3X3, Hand, Sparkles } from 'lucide-react';
 
 interface PhotoEditorProps {
   file: File;
@@ -51,11 +51,6 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({ file, onConfirm, onCancel, la
   };
 
   const handleStart = (e: React.MouseEvent | React.TouchEvent) => {
-    // Prevent default touch actions like scrolling if inside the canvas
-    if (e.type === 'touchstart') {
-      // e.preventDefault(); // Don't prevent default globally, only if needed. 
-      // Rely on css touch-action: none for the container.
-    }
     setIsDragging(true);
     const pos = getClientPos(e);
     setDragStart({ x: pos.x - position.x, y: pos.y - position.y });
@@ -78,6 +73,10 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({ file, onConfirm, onCancel, la
     setRotation((prev) => (prev + 90) % 360);
   };
 
+  const handleRandomCaption = () => {
+    setCaption(getRandomCaption(lang));
+  };
+
   const handleConfirm = () => {
     onConfirm({
       x: position.x,
@@ -94,7 +93,6 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({ file, onConfirm, onCancel, la
       <div className="flex flex-col md:flex-row w-full h-full md:h-auto md:max-w-5xl md:aspect-video bg-[#1a1a1a] md:rounded-2xl overflow-hidden shadow-2xl">
         
         {/* --- Top/Left: Canvas Preview Area --- */}
-        {/* 'touch-action: none' is crucial for mobile drag to work without scrolling the page */}
         <div 
              className="relative flex-1 bg-[#0f0f0f] overflow-hidden flex items-center justify-center cursor-move select-none touch-none"
              onMouseDown={handleStart}
@@ -143,9 +141,9 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({ file, onConfirm, onCancel, la
         </div>
 
         {/* --- Bottom/Right: Controls --- */}
-        <div className="w-full md:w-80 bg-gray-900 flex flex-col border-t md:border-t-0 md:border-l border-gray-800 h-[45vh] md:h-auto">
+        <div className="w-full md:w-80 bg-gray-900 flex flex-col border-t md:border-t-0 md:border-l border-gray-800 h-[50vh] md:h-auto">
           
-          {/* Header (Mobile Only / Desktop Header inside panel) */}
+          {/* Header */}
           <div className="flex justify-between items-center p-4 border-b border-gray-800">
             <h2 className="text-white font-mono font-bold flex items-center gap-2">
               <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
@@ -196,7 +194,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({ file, onConfirm, onCancel, la
                         : 'bg-transparent text-gray-400 border-gray-700 hover:border-gray-500'
                       }`}
                   >
-                    {f}
+                    {t(lang, `filtersList.${f}`)}
                   </button>
                 ))}
               </div>
@@ -207,13 +205,22 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({ file, onConfirm, onCancel, la
               <div className="flex items-center gap-2 text-xs text-gray-400 uppercase font-bold">
                  <Type size={12}/> {t(lang, 'caption')}
               </div>
-              <input 
-                type="text" maxLength={25}
-                placeholder={t(lang, 'captionPlaceholder')}
-                value={caption}
-                onChange={(e) => setCaption(e.target.value)}
-                className="w-full bg-black/30 text-white px-3 py-2 rounded border border-gray-700 focus:outline-none focus:border-pola-accent font-mono text-sm"
-              />
+              <div className="flex gap-2">
+                  <input 
+                    type="text" maxLength={25}
+                    placeholder={t(lang, 'captionPlaceholder')}
+                    value={caption}
+                    onChange={(e) => setCaption(e.target.value)}
+                    className="flex-1 bg-black/30 text-white px-3 py-2 rounded border border-gray-700 focus:outline-none focus:border-pola-accent font-mono text-sm"
+                  />
+                  <button 
+                    onClick={handleRandomCaption}
+                    className="p-2 bg-gray-800 border border-gray-700 rounded hover:bg-gray-700 text-yellow-400"
+                    title="Random Caption"
+                  >
+                    <Sparkles size={18} />
+                  </button>
+              </div>
             </div>
           </div>
 

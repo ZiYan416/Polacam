@@ -34,11 +34,11 @@ const Camera: React.FC<CameraProps> = ({ onCapture, isProcessing, isPrinting, la
   };
 
   return (
-    <div className="relative w-full max-w-[340px] md:max-w-md mx-auto select-none">
+    <div className="relative w-full max-w-[340px] md:max-w-md mx-auto select-none z-20">
       <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
 
       {/* --- Main Body --- */}
-      <div className="relative bg-[#f4f1ea] rounded-[2.5rem] shadow-[0_20px_40px_-10px_rgba(0,0,0,0.5)] p-1 overflow-hidden transition-transform duration-300">
+      <div className="relative bg-[#f4f1ea] rounded-[2.5rem] shadow-[0_20px_50px_-10px_rgba(0,0,0,0.6)] p-1 overflow-hidden transition-transform duration-300">
         
         {/* Leather Texture Overlay - CSS Pattern */}
         <div className="absolute bottom-0 left-0 right-0 h-[65%] bg-[#222] rounded-b-[2.2rem]" 
@@ -113,7 +113,7 @@ const Camera: React.FC<CameraProps> = ({ onCapture, isProcessing, isPrinting, la
           </div>
 
           {/* --- Bottom Ejection Slot --- */}
-          <div className="mt-auto h-8 bg-[#111] mx-8 mb-6 rounded-sm border-t border-gray-700 relative shadow-inner">
+          <div className="mt-auto h-8 bg-[#111] mx-8 mb-6 rounded-sm border-t border-gray-700 relative shadow-inner z-20">
              {/* This is just visual, the photo comes out from behind */}
              <div className="w-full h-full bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.05)_50%,transparent_100%)]"></div>
           </div>

@@ -11,28 +11,37 @@ interface DraggablePhotoProps {
   photo: Photo;
   initialX: number;
   initialY: number;
-  onDragEnd?: (id: string, x: number, y: number) => void;
   onDelete: (id: string) => void;
+  onSave: (photo: Photo) => void;
 }
 
-const DraggablePhoto: React.FC<DraggablePhotoProps> = ({ photo, initialX, initialY, onDelete }) => {
+const DraggablePhoto: React.FC<DraggablePhotoProps> = ({ photo, initialX, initialY, onDelete, onSave }) => {
+  // Start exactly at the slot position (initialX/Y)
   const [position, setPosition] = useState({ x: initialX, y: initialY });
   const [isDragging, setIsDragging] = useState(false);
   const [isEjecting, setIsEjecting] = useState(true);
+  const [isSaved, setIsSaved] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
-  const nodeRef = useRef<HTMLDivElement>(null);
-
+  
   // Ejection Animation
   useEffect(() => {
-    // Start at "slot" position (provided by initialX/Y which should be centered)
-    // Animate down
-    const timer = setTimeout(() => {
+    // Small delay to ensure render before transition
+    const timer1 = setTimeout(() => {
+      // Eject Downwards by ~200px
+      setPosition(p => ({ ...p, y: p.y + 200 }));
+    }, 50);
+
+    const timer2 = setTimeout(() => {
       setIsEjecting(false);
-      // Move down by 150px to simulate full ejection
-      setPosition(p => ({ ...p, y: p.y + 160 }));
-    }, 100);
-    return () => clearTimeout(timer);
+    }, 2050); // Matches transition duration
+
+    return () => { clearTimeout(timer1); clearTimeout(timer2); };
   }, []);
+
+  const handleSave = (p: Photo) => {
+    onSave(p);
+    setIsSaved(true);
+  };
 
   const handleStart = (clientX: number, clientY: number) => {
     if (isEjecting) return;
@@ -52,6 +61,8 @@ const DraggablePhoto: React.FC<DraggablePhotoProps> = ({ photo, initialX, initia
 
   // Event Listeners
   const onMouseDown = (e: React.MouseEvent) => {
+    // Only drag if not clicking a button inside
+    if ((e.target as HTMLElement).closest('button')) return;
     e.preventDefault();
     handleStart(e.clientX, e.clientY);
   };
@@ -60,10 +71,10 @@ const DraggablePhoto: React.FC<DraggablePhotoProps> = ({ photo, initialX, initia
   const onMouseUp = () => handleEnd();
 
   const onTouchStart = (e: React.TouchEvent) => {
+    if ((e.target as HTMLElement).closest('button')) return;
     handleStart(e.touches[0].clientX, e.touches[0].clientY);
   };
   const onTouchMove = (e: TouchEvent) => {
-    // Prevent scrolling while dragging photo
     if(isDragging) e.preventDefault();
     handleMove(e.touches[0].clientX, e.touches[0].clientY);
   };
@@ -90,19 +101,25 @@ const DraggablePhoto: React.FC<DraggablePhotoProps> = ({ photo, initialX, initia
 
   return (
     <div 
-      ref={nodeRef}
-      className={`fixed z-50 cursor-grab active:cursor-grabbing touch-none
-        ${isEjecting ? 'transition-all duration-[2000ms] ease-out' : 'transition-none'}
+      className={`fixed z-30 touch-none ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}
+        ${isEjecting ? 'transition-all duration-[2000ms] cubic-bezier(0.25, 1, 0.5, 1)' : 'transition-none'}
       `}
       style={{
         left: 0,
         top: 0,
-        transform: `translate3d(${position.x}px, ${position.y}px, 0) rotate(${isEjecting ? 0 : (Math.random() * 6 - 3)}deg) scale(${isDragging ? 1.05 : 1})`,
+        transform: `translate3d(${position.x}px, ${position.y}px, 0) rotate(${isEjecting ? 0 : -2}deg) scale(${isDragging ? 1.05 : 1})`,
       }}
       onMouseDown={onMouseDown}
       onTouchStart={onTouchStart}
     >
-      <PhotoCard photo={photo} onDelete={onDelete} isDeveloping={isEjecting} className="w-60 md:w-72 shadow-2xl" />
+      <PhotoCard 
+        photo={photo} 
+        onDelete={onDelete} 
+        onSave={handleSave}
+        isDeveloping={isEjecting} 
+        isSaved={isSaved}
+        className="w-60 md:w-72 shadow-2xl" 
+      />
     </div>
   );
 };
