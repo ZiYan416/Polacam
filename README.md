@@ -1,244 +1,233 @@
 <div align="center">
   <br />
   <h1>📸 Polacam</h1>
-  <p>
-    <strong>Digital Analog • Cyber Polaroid • 赛博拍立得</strong>
-  </p>
+  <h3>Digital Analog • Cyber Polaroid • 赛博拍立得</h3>
   <p>
     An interactive retro instant camera experience for the web. <br/>
     Capture, Edit, Develop, and Collect.
   </p>
   
   <p align="center">
-    <a href="#-readme-english">English</a> | <a href="#-说明文档-中文">中文</a>
+    <a href="#-english">English</a> | <a href="#-中文">中文</a>
   </p>
   <br />
 </div>
 
 ---
 
-<a name="-readme-english"></a>
-# 📘 README (English)
+<a name="-english"></a>
+# 📘 Polacam (English)
 
 ## 📖 Introduction
 **Polacam** is a React-based web application that simulates the tactile experience of instant photography. It leverages the **HTML5 Canvas API** for real-time image processing (filters, textures, composites) and **CSS3** for realistic mechanical animations. 
 
-Unlike typical photo apps, Polacam focuses on the "process"—from the mechanical shutter click to the slow development of the film, bringing the ritual of analog photography to the digital screen.
+It is designed to bring the "ritual" of analog photography to the digital screen: from the mechanical shutter click, to the tactile photo ejection, to the slow development process.
 
-## ✨ Features
-- **Retro Camera Interface**: A skeumorphic design built purely with CSS/SVG.
-- **Darkroom Editor**:
-  - **Transform**: Crop, Zoom, Rotate.
-  - **Filters**: Custom pixel-manipulation filters (Vintage, Noir, Sepia, Cool).
-  - **Frames**: Support for Square (Classic), Mini (Portrait), and Wide ratios.
-- **Physics & Animation**:
-  - Photos "eject" physically from the camera slot.
-  - Draggable floating photos with physics-like feel.
-  - Simulated chemical development process.
-- **Data Persistence**: Currently uses `LocalStorage` for a server-less experience, ready for REST API integration.
+## ✨ Key Features
 
-## 🛠 Tech Stack
-- **Core**: React 18, TypeScript, Vite
-- **Styling**: Tailwind CSS
-- **Graphics**: HTML5 Canvas API (No heavy 3rd-party graphics libs)
-- **Icons**: Lucide React
-- **Architecture**: Service-based pattern for easy Backend substitution.
+### 1. 📷 Retro Camera Studio
+- **Skeuomorphic Design**: A camera interface built purely with CSS/SVG/HTML (no heavy 3D models).
+- **Physical Animations**: Photos physically "eject" from the camera slot using CSS clip-paths and transforms.
+- **Mobile Adaptive**: Optimized layout that feels like a real device on mobile screens.
+
+### 2. 🎨 Darkroom Editor (The Lab)
+- **Aspect Ratios**: Support for **Square (1:1)**, **Mini (3:4)**, **Wide (16:9)**, **Cinema (21:9)**, and **Portrait (4:5)**.
+- **Canvas Engine**: Real-time, high-performance image processing using HTML5 Canvas.
+- **Filters**: Custom pixel-manipulation filters (Vintage, Noir, Sepia, Cool) applied instantly.
+- **Transform**: Pan, Zoom, and Rotate your image to frame the perfect shot.
+- **Smart Captions**: Auto-date stamping or random trendy caption generation.
+
+### 3. 🖼️ Floating Desktop
+- **Interactive Physics**: Ejected photos float on your screen. You can drag, throw, and stack them.
+- **Gestures**:
+  - **Drag**: Move photos around.
+  - **Zoom**: Mouse wheel (Desktop) or Pinch (Mobile).
+  - **Rotate**: Multi-touch rotation (Mobile) or Reset button.
+- **Persistent State**: Photos stay where you left them, even if you switch tabs (via React State lifting).
+
+### 4. 🎞️ Gallery & Storage
+- **Local Collection**: Save your favorite shots to the "Gallery".
+- **Toggle System**: Like/Unlike photos to add/remove them from your persistent collection.
+- **Data Persistence**: Uses `LocalStorage` by default, preserving your memories across sessions.
 
 ---
 
-## 🔌 Backend Integration Guide
+## 🚀 Getting Started
 
-The application is designed with a **Service Layer Pattern**. The frontend communicates with data sources strictly through `services/storageService.ts`. Currently, this service uses the browser's `LocalStorage`.
+### Prerequisites
+- **Node.js** (v16 or higher)
+- **npm** or **yarn**
 
-To connect a **Python (FastAPI)** backend, follow these steps:
+### Installation
 
-### 1. API Specification
-Your backend should implement the following endpoints:
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/your-username/polacam.git
+   cd polacam
+   ```
 
-#### A. Photo Management
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/api/v1/photos` | Retrieve user's photo gallery |
-| `POST` | `/api/v1/photos` | Upload a generated Polaroid |
-| `DELETE` | `/api/v1/photos/{id}` | Delete a specific photo |
+2. **Install dependencies**
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
 
-**POST Payload Example (JSON)**
-```json
-{
-  "image_base64": "data:image/jpeg;base64,/9j/4AAQSkZJR...",
-  "original_url": "blob:http://localhost...",
-  "meta": {
-    "filter": "Vintage",
-    "frame_type": "Square",
-    "caption": "Sunday Vibes",
-    "created_at": 1715420000
-  }
-}
+3. **Start Development Server**
+   ```bash
+   npm run dev
+   # or
+   yarn dev
+   ```
+   Open `http://localhost:5173` in your browser.
+
+### Build for Production
+```bash
+npm run build
 ```
+The output will be in the `dist` folder, ready for static hosting.
 
-### 2. Updating the Frontend Service
-Modify `services/storageService.ts` to replace `localStorage` calls with `fetch` or `axios`.
+---
 
-```typescript
-// services/storageService.ts (Example Implementation)
+## ☁️ Deployment
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+Since Polacam is a static web application (SPA), it can be deployed easily on any static hosting service.
 
-export const savePhoto = async (photo: Photo): Promise<void> => {
-  const response = await fetch(`${API_BASE}/api/v1/photos`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      // 'Authorization': `Bearer ${token}` // Uncomment for Auth
-    },
-    body: JSON.stringify({
-      id: photo.id,
-      image_data: photo.dataUrl,
-      caption: photo.caption,
-      // ... map other fields
-    })
-  });
-  
-  if (!response.ok) throw new Error('Upload failed');
-};
+### Option 1: Vercel (Recommended)
+1. Install Vercel CLI: `npm i -g vercel`
+2. Run `vercel` in the project root.
+3. Follow the prompts. Vercel automatically detects Vite settings.
 
-export const getPhotos = async (): Promise<Photo[]> => {
-  const res = await fetch(`${API_BASE}/api/v1/photos`);
-  return res.json();
-};
+### Option 2: Netlify
+1. Drag and drop the `dist` folder (created after `npm run build`) into Netlify Drop.
+2. Or connect your GitHub repo to Netlify and set the build command to `npm run build` and publish directory to `dist`.
+
+### Option 3: GitHub Pages
+1. Update `vite.config.ts` to set base path: `base: '/polacam/',` (if deploying to a subdirectory).
+2. Run build.
+3. Push the `dist` folder to a `gh-pages` branch.
+
+---
+
+## 🔌 Backend Integration (Optional)
+
+The app currently runs in **Serverless Mode** (using LocalStorage). To connect a real backend (e.g., Python FastAPI):
+
+1. **API Specification**:
+   Implement a `POST /api/photos` endpoint that accepts JSON:
+   ```json
+   { "image_data": "base64_string...", "meta": { ... } }
+   ```
+
+2. **Update Service**:
+   Modify `src/services/storageService.ts`. Replace `localStorage` logic with `fetch()` calls to your API.
+
+---
+
+<br/>
+
+<a name="-中文"></a>
+# 📘 Polacam (中文说明)
+
+## 📖 项目简介
+**Polacam (赛博拍立得)** 是一款基于 React 开发的 Web 应用程序，旨在还原即时成像摄影的触感与仪式感。它利用 **HTML5 Canvas API** 进行实时的图像处理，并通过精细的 **CSS3** 动画模拟机械运作。
+
+从按下快门的机械震动，到相纸缓缓吐出，再到悬浮在桌面上等待显影，Polacam 致力于在数字屏幕上重现模拟摄影的温情。
+
+## ✨ 核心功能详解
+
+### 1. 📷 拟物化相机 (Studio)
+- **纯代码构建**: 界面完全由 CSS/SVG 绘制，无大型 3D 模型文件，加载极快。
+- **机械动画**: 实现了相纸从出片口“滑出”的物理视觉错觉，配合机械音效（未来计划）。
+- **移动端适配**: 针对手机竖屏优化的操作布局，单手即可完成拍摄。
+
+### 2. 🎨 暗房修图室 (The Lab)
+- **多画幅支持**: 提供 **经典方 (Square)**、**三寸 (Mini)**、**宽幅 (Wide)**、**电影感 (Cinema)** 等多种比例。
+- **Canvas 引擎**: 纯前端高性能渲染，所见即所得 (WYSIWYG)。
+- **实时滤镜**: 内置复古、黑白、胶片、冷调等像素级滤镜。
+- **自由构图**: 支持对上传图片进行缩放、旋转、拖拽，重新构图。
+- **智能文案**: 自动生成日期水印，或使用“魔法棒”随机生成潮流文案。
+
+### 3. 🖼️ 悬浮桌面 (Interactive Desktop)
+- **物理交互**: 照片吐出后会悬浮在屏幕上。你可以像在真实桌面上一样拖拽、堆叠它们。
+- **手势操作**:
+  - **拖拽**: 随意整理照片位置。
+  - **缩放**: 桌面端使用鼠标滚轮，移动端支持双指捏合。
+  - **旋转**: 移动端支持双指旋转。
+- **状态记忆**: 即使切换到相册页面再回来，桌面上照片的位置、角度都会被完美保留。
+
+### 4. 🎞️ 碎片收集 (Gallery)
+- **持久化存储**: 点击照片底部的“红心”即可收藏。
+- **数据管理**: 默认使用浏览器本地存储 (LocalStorage)，隐私安全，无需联网即可使用。
+- **一键整理**: 桌面太乱？点击顶部的“整理桌面”按钮，自动将照片排列整齐。
+
+---
+
+## 🚀 开发与启动指南
+
+### 环境要求
+- **Node.js**: v16 或更高版本
+- **包管理器**: npm 或 yarn
+
+### 安装步骤
+
+1. **克隆项目**
+   ```bash
+   git clone https://github.com/your-username/polacam.git
+   cd polacam
+   ```
+
+2. **安装依赖**
+   ```bash
+   npm install
+   # 或者使用 yarn
+   yarn install
+   ```
+
+3. **启动本地开发服务器**
+   ```bash
+   npm run dev
+   # 或者
+   yarn dev
+   ```
+   启动后，在浏览器访问 `http://localhost:5173` 即可看到应用。
+
+### 打包构建
+当准备发布时，运行以下命令生成静态文件：
+```bash
+npm run build
 ```
-
-### 3. User Authentication (Extension)
-To add a User System (Login/Register):
-1.  **Backend**: Implement `POST /auth/login` returning a JWT.
-2.  **Frontend**: 
-    - Store the JWT in `localStorage` or `Cookie`.
-    - Inject the token into the `Authorization` header in `storageService.ts`.
+构建产物将输出在 `dist` 目录中。
 
 ---
 
-## 🗺 Roadmap
+## ☁️ 部署指南
 
-- [ ] **Social Sharing**: One-click generation of shareable cards for Instagram/Twitter.
-- [ ] **Cloud Sync**: Complete the FastAPI integration for multi-device sync.
-- [ ] **Collaborative Rolls**: Allow multiple users to contribute to a single "Film Roll".
-- [ ] **Physical Printing**: Integration with portable printers via WebBluetooth (Experimental).
+Polacam 是纯静态应用 (SPA)，可以部署在任何静态托管服务上。
 
----
+### 推荐：Vercel 部署
+1. 全局安装 Vercel CLI: `npm i -g vercel`
+2. 在项目根目录运行: `vercel`
+3. 一路回车，Vercel 会自动识别 Vite 配置并完成部署。
 
-<br />
-<br />
+### Netlify 部署
+1. 将 `npm run build` 生成的 `dist` 文件夹直接拖入 Netlify Drop 区域。
+2. 或者在 Netlify 后台关联 GitHub 仓库，设置 Build command 为 `npm run build`，Publish directory 为 `dist`。
 
-<a name="-说明文档-中文"></a>
-# 📘 说明文档 (中文)
-
-## 📖 简介
-**Polacam (赛博拍立得)** 是一款基于 React 开发的 Web 应用程序，旨在还原即时成像摄影的触感与仪式感。它利用 **HTML5 Canvas API** 进行实时的图像处理（如滤镜、纹理叠加、合成），并通过 精细的 **CSS3** 动画模拟机械运作。
-
-Polacam 不仅仅是一个滤镜 App，它强调“摄影过程”——从按下快门的机械震动，到相纸缓缓吐出，再到影像在屏幕上缓慢显影的过程。
-
-## ✨ 核心功能
-- **拟物化相机界面**：纯 CSS/SVG 构建，具有真实的物理交互感。
-- **暗房修图室**：
-  - **构图**：支持自由缩放、旋转、拖拽裁剪。
-  - **滤镜**：内置复古、黑白、胶片、冷调等 Canvas 像素级滤镜。
-  - **画幅**：支持 经典方 (Square)、三寸 (Mini)、宽幅 (Wide) 三种相纸比例。
-- **物理动画引擎**：
-  - 相片从相机顶部插槽“滑出”的视觉错觉动画。
-  - 悬浮相片支持拖拽，模拟真实桌面的散落感。
-  - 模拟化学显影的色彩渐变过程。
-- **数据持久化**：目前使用本地存储，支持无缝切换至云端数据库。
-
-## 🛠 技术栈
-- **前端框架**: React 18, TypeScript
-- **构建工具**: Vite
-- **样式库**: Tailwind CSS
-- **图形核心**: HTML5 Canvas API (未使用 Fabric.js 等重型库，保证轻量高效)
-- **架构**: 服务层模式 (Service Layer Pattern)，便于解耦。
+### GitHub Pages 部署
+1. 若部署在子路径，请修改 `vite.config.ts` 添加 `base: '/repo-name/'`。
+2. 运行构建，将 `dist` 目录内容推送到仓库的 `gh-pages` 分支。
 
 ---
 
-## 🔌 后端对接指引 (Backend Integration)
+## 🔌 后端扩展 (可选)
 
-本项目采用 **服务层模式** 设计，所有数据交互逻辑封装在 `services/storageService.ts` 中。目前默认使用浏览器 `LocalStorage` 进行演示。
+本项目采用了**服务层模式 (Service Pattern)**，数据逻辑与 UI 解耦。
 
-若需对接 **Python (FastAPI)** 或其他后端服务，请参考以下规范：
-
-### 1. API 接口规范
-建议后端实现以下 RESTful 接口：
-
-#### A. 照片管理 (Photo Resources)
-| 方法 | 路径 | 描述 |
-| :--- | :--- | :--- |
-| `GET` | `/api/v1/photos` | 获取当前用户的照片流 |
-| `POST` | `/api/v1/photos` | 上传一张生成的拍立得照片 |
-| `DELETE` | `/api/v1/photos/{id}` | 删除指定照片 |
-
-**上传数据结构示例 (JSON)**
-由于前端已经生成了合成后的 Base64 图片，后端只需负责存储字符串或转存至对象存储（S3/OSS）。
-```json
-{
-  "image_data": "data:image/jpeg;base64,/9j/4AAQSkZJR...",
-  "meta": {
-    "filter": "Vintage",
-    "caption": "周末愉快",
-    "created_at": 1715420000
-  }
-}
-```
-
-### 2. 修改前端服务层
-你需要修改 `services/storageService.ts`，将本地存储逻辑替换为网络请求。
-
-```typescript
-// services/storageService.ts (对接示例)
-
-// 环境变量获取 API 地址
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-
-export const savePhoto = async (photo: Photo): Promise<void> => {
-  // 发送请求到后端
-  const response = await fetch(`${API_BASE}/api/v1/photos`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      // 如需鉴权，在此处添加 Token
-      // 'Authorization': `Bearer ${localStorage.getItem('token')}` 
-    },
-    body: JSON.stringify({
-      id: photo.id,
-      image_data: photo.dataUrl, // 完整的 Base64 字符串
-      caption: photo.caption,
-      filter: photo.filter
-    })
-  });
-  
-  if (!response.ok) throw new Error('上传失败');
-};
-
-export const getPhotos = async (): Promise<Photo[]> => {
-  const res = await fetch(`${API_BASE}/api/v1/photos`);
-  if (!res.ok) return [];
-  return res.json(); // 确保后端返回格式与 TypeScript 接口 Photo 匹配
-};
-```
-
-### 3. 用户系统对接 (User System)
-若需添加登录注册功能：
-1.  **后端**：实现 `/auth/login` 接口，验证成功后返回 JWT Token。
-2.  **前端**：
-    - 创建一个新的 `AuthService` 处理登录逻辑。
-    - 将 Token 存储在 `LocalStorage` 或 `Cookie` 中。
-    - 在 `savePhoto` 等请求的 Header 中带上 Token。
-
----
-
-## 🗺 未来规划 (Roadmap)
-
-- [ ] **社交分享卡片**：一键生成适合 Instagram/小红书 分享的精美卡片。
-- [ ] **云端同步**：完成 FastAPI 对接，实现多端数据同步。
-- [ ] **胶卷共享计划**：允许好友共同向同一个“胶卷”中拍摄照片。
-- [ ] **实体打印对接**：尝试通过 WebBluetooth 连接便携式照片打印机（实验性）。
+若需接入 Python / Node.js 后端：
+1. 打开 `src/services/storageService.ts`。
+2. 将其中的 `localStorage` 操作替换为您后端的 API 请求 (axios/fetch)。
+3. 后端需提供图片上传及元数据存储接口。
 
 ---
 
