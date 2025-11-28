@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Photo } from '../types';
 import PhotoCard from './PhotoCard';
@@ -22,18 +23,22 @@ const Gallery: React.FC<GalleryProps> = ({ photos, onDelete }) => {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-8 gap-y-12 px-4 pb-20">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-12 md:gap-x-8 md:gap-y-16 px-2 md:px-4 pb-28">
       {photos.map((photo, index) => (
-        <div key={photo.id} className="flex justify-center group">
-             {/* Alternating rotations for natural wall look */}
+        <div key={photo.id} className="flex justify-center relative group">
+             {/* 
+                Fix: Removed 'isolate'. Added 'group-hover:z-[50]' to the inner wrapper.
+                This ensures the hovered card is physically on top of neighbors in the stacking context,
+                allowing buttons to be clicked.
+             */}
             <div 
-              className="transition-transform duration-300 group-hover:scale-105 group-hover:rotate-0 z-10"
-              style={{ transform: `rotate(${index % 2 === 0 ? 1.5 : -1.5}deg)` }}
+              className="relative transition-all duration-300 z-0 group-hover:z-[50] group-hover:scale-105 group-hover:rotate-0"
+              style={{ transform: `rotate(${index % 2 === 0 ? 2 : -2}deg)` }}
             >
                 <PhotoCard 
                   photo={photo} 
                   onDelete={onDelete} 
-                  className="w-full max-w-[280px] shadow-lg hover:shadow-2xl" 
+                  className="w-full max-w-[170px] md:max-w-[280px]" 
                 />
             </div>
         </div>

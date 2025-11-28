@@ -1,163 +1,268 @@
 
 /**
  * @file DraggablePhoto.tsx
- * @description Complex animation: Eject UP -> Fly to Random Spot.
+ * @description Controlled component for floating photos with advanced interactions (Zoom, Rotate, Drag).
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Photo } from '../types';
+import { FloatingPhoto, Photo } from '../types';
 import PhotoCard from './PhotoCard';
+import { RotateCw } from 'lucide-react';
 
 interface DraggablePhotoProps {
-  photo: Photo;
-  initialX: number;
-  initialY: number;
+  photo: FloatingPhoto;
+  initialOrigin: { x: number; y: number };
+  onUpdate: (id: string, updates: Partial<FloatingPhoto>) => void;
+  onFocus: (id: string) => void;
   onDelete: (id: string) => void;
   onSave: (photo: Photo) => void;
 }
 
-const DraggablePhoto: React.FC<DraggablePhotoProps> = ({ photo, initialX, initialY, onDelete, onSave }) => {
-  // Phase 1: Start at slot
-  const [position, setPosition] = useState({ x: initialX, y: initialY });
-  const [rotation, setRotation] = useState(0);
-  const [scale, setScale] = useState(0.9); 
+const DraggablePhoto: React.FC<DraggablePhotoProps> = ({ 
+  photo, 
+  initialOrigin, 
+  onUpdate, 
+  onFocus,
+  onDelete, 
+  onSave 
+}) => {
+  // Fix: Removed local isSaved state. We now rely on photo.isSaved from App level state.
   
-  // Animation States
-  const [animPhase, setAnimPhase] = useState<'eject' | 'fly' | 'idle'>('eject');
-  const [isSaved, setIsSaved] = useState(false);
+  // Animation Phase for new photos: Eject -> Fly -> Idle
+  const [isEjecting, setIsEjecting] = useState(!!photo.isNew);
+  const [ejectOffsetY, setEjectOffsetY] = useState(0);
+
+  // Interaction State
   const [isDragging, setIsDragging] = useState(false);
+  const [isInteracting, setIsInteracting] = useState(false); // General interaction flag (hover/active)
   
+  // Refs for gesture calculations
   const dragStart = useRef({ x: 0, y: 0 });
+  const rotateStart = useRef({ angle: 0, mouseAngle: 0 });
+  const pinchStart = useRef({ dist: 0, angle: 0, scale: 1, rotation: 0 });
+  const cardRef = useRef<HTMLDivElement>(null);
 
+  // --- Ejection Animation Logic (Only for new photos) ---
   useEffect(() => {
-    // --- Phase 1: Ejection (Upwards & Reveal) ---
-    // Start slightly delayed to allow DOM mount
-    const t1 = setTimeout(() => {
-        // Move UP by ~220px to clear the camera body
-        // Animation CSS will handle the clip-path to make it look like it's sliding out
-        setPosition(p => ({ ...p, y: p.y - 220 }));
-        setScale(1);
-    }, 50);
+    if (!photo.isNew) return;
 
-    // --- Phase 2: Fly to Random Spot ---
+    // Phase 1: Eject Up
+    const t1 = setTimeout(() => setEjectOffsetY(-300), 50);
+
+    // Phase 2: Fly to target (handled by the CSS transition to `photo.x/y`)
+    // We just need to mark it as not "new" anymore so it snaps to the persistent state logic
     const t2 = setTimeout(() => {
-        setAnimPhase('fly');
+        setIsEjecting(false);
+        onUpdate(photo.id, { isNew: false });
+    }, 1200);
+
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [photo.isNew, photo.id, onUpdate]);
+
+  // --- Mouse/Touch Handlers ---
+
+  const handlePointerDown = (e: React.MouseEvent | React.TouchEvent) => {
+    // If hitting buttons, don't drag
+    if ((e.target as HTMLElement).closest('button')) return;
+    
+    onFocus(photo.id); // Bring to front
+    
+    // Check for multi-touch (Pinch/Rotate)
+    if ('touches' in e && e.touches.length === 2) {
+        e.preventDefault();
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+        const angle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX) * (180 / Math.PI);
         
-        // Calculate random position within viewport (with padding)
-        const maxX = window.innerWidth - 250;
-        const maxY = window.innerHeight - 350; // Keep away from camera bottom
-        const randX = 20 + Math.random() * (maxX - 20);
-        const randY = 80 + Math.random() * (maxY - 150);
-        const randRot = (Math.random() * 20) - 10;
+        pinchStart.current = { 
+            dist, 
+            angle, 
+            scale: photo.scale, 
+            rotation: photo.rotation 
+        };
+        setIsDragging(true);
+        return;
+    }
 
-        setPosition({ x: randX, y: randY });
-        setRotation(randRot);
-
-    }, 1500); // Wait for ejection to finish
-
-    // --- Phase 3: Interactive ---
-    const t3 = setTimeout(() => {
-        setAnimPhase('idle');
-    }, 2500); // 1.5s eject + 1s fly
-
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
-  }, []);
-
-  // --- Drag Logic ---
-  const handleStart = (clientX: number, clientY: number) => {
-    if (animPhase !== 'idle') return;
+    // Single touch/mouse drag
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+    
     setIsDragging(true);
-    dragStart.current = { x: clientX - position.x, y: clientY - position.y };
+    dragStart.current = { x: clientX - photo.x, y: clientY - photo.y };
   };
 
-  const handleMove = (clientX: number, clientY: number) => {
+  const handlePointerMove = (e: MouseEvent | TouchEvent) => {
     if (!isDragging) return;
-    setPosition({ x: clientX - dragStart.current.x, y: clientY - dragStart.current.y });
-  };
-
-  const handleEnd = () => setIsDragging(false);
-
-  // Listeners
-  const onMouseDown = (e: React.MouseEvent) => {
-    if ((e.target as HTMLElement).closest('button')) return;
     e.preventDefault();
-    handleStart(e.clientX, e.clientY);
-  };
-  const onTouchStart = (e: React.TouchEvent) => {
-    if ((e.target as HTMLElement).closest('button')) return;
-    handleStart(e.touches[0].clientX, e.touches[0].clientY);
+
+    // Multi-touch
+    if ('touches' in e && e.touches.length === 2) {
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+        const angle = Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX) * (180 / Math.PI);
+
+        const scaleDelta = dist / pinchStart.current.dist;
+        const angleDelta = angle - pinchStart.current.angle;
+
+        // Apply constraints
+        const newScale = Math.min(Math.max(pinchStart.current.scale * scaleDelta, 0.5), 2);
+        
+        onUpdate(photo.id, {
+            scale: newScale,
+            rotation: pinchStart.current.rotation + angleDelta
+        });
+        return;
+    }
+
+    // Single drag
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : (e as MouseEvent).clientY;
+
+    onUpdate(photo.id, {
+        x: clientX - dragStart.current.x,
+        y: clientY - dragStart.current.y
+    });
   };
 
+  const handlePointerUp = () => setIsDragging(false);
+
+  // Attach global move/up listeners when dragging
   useEffect(() => {
     if (isDragging) {
-        const onMove = (e: MouseEvent) => handleMove(e.clientX, e.clientY);
-        const onUp = () => handleEnd();
-        const onTMove = (e: TouchEvent) => { e.preventDefault(); handleMove(e.touches[0].clientX, e.touches[0].clientY); };
-        
-        window.addEventListener('mousemove', onMove);
-        window.addEventListener('mouseup', onUp);
-        window.addEventListener('touchmove', onTMove, { passive: false });
-        window.addEventListener('touchend', onUp);
-        return () => {
-            window.removeEventListener('mousemove', onMove);
-            window.removeEventListener('mouseup', onUp);
-            window.removeEventListener('touchmove', onTMove);
-            window.removeEventListener('touchend', onUp);
-        };
+        window.addEventListener('mousemove', handlePointerMove as any, { passive: false });
+        window.addEventListener('mouseup', handlePointerUp);
+        window.addEventListener('touchmove', handlePointerMove as any, { passive: false });
+        window.addEventListener('touchend', handlePointerUp);
+    } else {
+        window.removeEventListener('mousemove', handlePointerMove as any);
+        window.removeEventListener('mouseup', handlePointerUp);
+        window.removeEventListener('touchmove', handlePointerMove as any);
+        window.removeEventListener('touchend', handlePointerUp);
     }
+    return () => {
+        window.removeEventListener('mousemove', handlePointerMove as any);
+        window.removeEventListener('mouseup', handlePointerUp);
+        window.removeEventListener('touchmove', handlePointerMove as any);
+        window.removeEventListener('touchend', handlePointerUp);
+    };
   }, [isDragging]);
 
-  // Dynamic Styles based on phase
-  const getTransition = () => {
-      if (isDragging) return 'none';
-      if (animPhase === 'eject') return 'transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1), clip-path 1.2s cubic-bezier(0.2, 0.8, 0.2, 1)';
-      if (animPhase === 'fly') return 'transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)'; // Bouncy
-      return 'transform 0.2s ease-out';
+
+  // --- Wheel Zoom (Desktop) ---
+  const handleWheel = (e: React.WheelEvent) => {
+    if (!isInteracting) return;
+    e.stopPropagation();
+    // e.preventDefault() is handled by passive: false if we attached natively, 
+    // but React events are passive by default. 
+    // We update scale based on deltaY.
+    const delta = -e.deltaY * 0.001;
+    const newScale = Math.min(Math.max(photo.scale + delta, 0.5), 1.5);
+    onUpdate(photo.id, { scale: newScale });
   };
 
-  // Logic for gradually appearing from the slot (bottom part hidden initially)
-  const getClipPath = () => {
-      if (animPhase === 'eject' && position.y > initialY - 180) {
-          // While ejecting, clip the bottom to simulate coming out of slot
-          // We start fully clipped (inset 100% from bottom) and go to 0%
-          // But since we animate the state `position.y`, we can just rely on CSS transition
-          // However, we need a start state.
-          // State-based approach:
-          // Before T1: clip-path: inset(0 0 100% 0);
-          // After T1: clip-path: inset(0 0 0% 0);
-          return 'inset(0 0 0% 0)'; 
-      }
-      return 'inset(0 0 0% 0)';
+  // --- Rotate Handle Logic ---
+  const handleRotateStart = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
+    
+    if (cardRef.current) {
+        const rect = cardRef.current.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const startAngle = Math.atan2(clientY - centerY, clientX - centerX) * (180 / Math.PI);
+        
+        rotateStart.current = { angle: photo.rotation, mouseAngle: startAngle };
+        
+        const moveHandler = (moveEvent: MouseEvent | TouchEvent) => {
+            const mx = 'touches' in moveEvent ? moveEvent.touches[0].clientX : (moveEvent as MouseEvent).clientX;
+            const my = 'touches' in moveEvent ? moveEvent.touches[0].clientY : (moveEvent as MouseEvent).clientY;
+            const currentAngle = Math.atan2(my - centerY, mx - centerX) * (180 / Math.PI);
+            const delta = currentAngle - rotateStart.current.mouseAngle;
+            onUpdate(photo.id, { rotation: rotateStart.current.angle + delta });
+        };
+        
+        const upHandler = () => {
+            window.removeEventListener('mousemove', moveHandler as any);
+            window.removeEventListener('mouseup', upHandler);
+            window.removeEventListener('touchmove', moveHandler as any);
+            window.removeEventListener('touchend', upHandler);
+        };
+
+        window.addEventListener('mousemove', moveHandler as any);
+        window.addEventListener('mouseup', upHandler);
+        window.addEventListener('touchmove', moveHandler as any);
+        window.addEventListener('touchend', upHandler);
+    }
   };
 
-  // We need to initialize style for clip-path before the first render effect kicks in
-  // So we use a separate style object logic
-  const isEjectingStart = animPhase === 'eject' && position.y === initialY;
+
+  // --- Styles ---
+  
+  // Calculate Responsive Width
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const baseWidth = isMobile ? 180 : 280;
+
+  // Render Position
+  // If isNew (Ejecting), we start at initialOrigin (Camera Slot) + offsetY
+  // If Idle, we use photo.x / photo.y
+  const x = isEjecting ? initialOrigin.x : photo.x;
+  const y = isEjecting ? (initialOrigin.y + ejectOffsetY) : photo.y;
+  
+  // Transition
+  const transition = isDragging ? 'none' : 
+                     isEjecting ? 'transform 1s cubic-bezier(0.25, 1, 0.5, 1), clip-path 1s ease' : 
+                     'transform 0.3s ease-out'; // Smooth settle
+
+  const clipPath = isEjecting 
+      ? (ejectOffsetY === 0 ? 'inset(0 0 100% 0)' : 'inset(0 0 0% 0)') 
+      : 'none';
 
   return (
     <div 
-      className={`fixed touch-none select-none`}
-      style={{
-        left: 0, top: 0,
-        zIndex: animPhase === 'eject' ? 15 : 50, // Z-15 is below Camera Lip (Z-30) but above Body?
-        // Actually, simple Z-indexing might fail if Camera is separate. 
-        // We use clip-path to simulate occlusion.
-        transform: `translate3d(${position.x}px, ${position.y}px, 0) rotate(${rotation}deg) scale(${isDragging ? 1.05 : scale})`,
-        transition: getTransition(),
-        clipPath: isEjectingStart ? 'inset(0 0 100% 0)' : 'inset(0 0 0% 0)',
-        cursor: animPhase === 'idle' ? 'grab' : 'default'
-      }}
-      onMouseDown={onMouseDown}
-      onTouchStart={onTouchStart}
+        ref={cardRef}
+        className="fixed touch-none"
+        style={{
+            left: 0, top: 0,
+            width: `${baseWidth}px`,
+            zIndex: photo.zIndex,
+            transform: `translate3d(${x}px, ${y}px, 0) rotate(${photo.rotation}deg) scale(${photo.scale})`,
+            transition,
+            clipPath,
+            cursor: isDragging ? 'grabbing' : 'grab',
+        }}
+        onMouseDown={handlePointerDown}
+        onTouchStart={handlePointerDown}
+        onMouseEnter={() => setIsInteracting(true)}
+        onMouseLeave={() => setIsInteracting(false)}
+        onWheel={handleWheel}
     >
-      <PhotoCard 
-        photo={photo} 
-        onDelete={onDelete} 
-        onSave={(p) => { onSave(p); setIsSaved(true); }}
-        isDeveloping={animPhase !== 'idle'}
-        isSaved={isSaved}
-        className="w-64 shadow-xl"
-      />
+      
+      {/* Rotation Handle (Visible on Hover/Interact) */}
+      {!isEjecting && isInteracting && (
+        <div 
+            className="absolute -top-12 left-1/2 -translate-x-1/2 w-8 h-8 bg-white border border-gray-300 rounded-full shadow-md flex items-center justify-center cursor-ew-resize z-50 animate-fade-in text-gray-600 hover:text-pola-accent hover:border-pola-accent"
+            onMouseDown={handleRotateStart}
+            onTouchStart={handleRotateStart}
+        >
+            <RotateCw size={16} />
+        </div>
+      )}
+
+      {/* Visual Feedback for Selection */}
+      <div className={`relative transition-all duration-300 ${isInteracting ? 'scale-[1.02]' : ''}`}>
+        <PhotoCard 
+            photo={photo} 
+            onDelete={onDelete} 
+            onSave={onSave} // Pass event up, parent App.tsx updates isSaved state
+            isDeveloping={isEjecting} // Use ejecting phase to show developing filter
+            isSaved={photo.isSaved} // Use saved state from props
+            className={isInteracting ? 'shadow-2xl ring-2 ring-white/50 ring-offset-2 ring-offset-transparent' : ''}
+        />
+      </div>
     </div>
   );
 };

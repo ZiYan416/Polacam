@@ -21,10 +21,10 @@ export enum FrameType {
 }
 
 export interface EditConfig {
-  x: number;
-  y: number;
-  scale: number;
-  rotation: number;
+  x: number;       // Offset X in pixels relative to frame center
+  y: number;       // Offset Y in pixels relative to frame center
+  scale: number;   // Scaling factor
+  rotation: number;// Rotation in degrees
   caption: string;
   filter: FilterType;
   frameType: FrameType;
@@ -38,6 +38,16 @@ export interface Photo {
   caption?: string;
   filter: FilterType;
   frameType: FrameType;
+}
+
+export interface FloatingPhoto extends Photo {
+  x: number;
+  y: number;
+  rotation: number;
+  scale: number;
+  zIndex: number;
+  isNew?: boolean; // Used to trigger the initial ejection animation
+  isSaved?: boolean; // Persistent saved state
 }
 
 export interface CameraState {

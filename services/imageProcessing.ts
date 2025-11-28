@@ -2,9 +2,10 @@
 /**
  * @file imageProcessing.ts
  * @description Core image manipulation service using the Canvas API.
+ * Matches the rendering logic of PhotoEditor.tsx exactly.
  */
 
-import { FilterType, EditConfig, FrameType } from '../types';
+import { FilterType, EditConfig } from '../types';
 import { FRAME_DIMENSIONS } from '../constants';
 
 export const loadImage = (src: string): Promise<HTMLImageElement> => {
@@ -50,14 +51,16 @@ const applyFilterToContext = (ctx: CanvasRenderingContext2D, width: number, heig
 
   ctx.putImageData(imageData, 0, 0);
 
+  // Overlay effects
   if (filter === FilterType.VINTAGE || filter === FilterType.SEPIA) {
+    ctx.save();
     ctx.globalCompositeOperation = 'multiply';
     const gradient = ctx.createRadialGradient(width / 2, height / 2, width / 3, width / 2, height / 2, width);
     gradient.addColorStop(0, 'rgba(255, 255, 255, 0)');
     gradient.addColorStop(1, 'rgba(60, 40, 20, 0.4)');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
-    ctx.globalCompositeOperation = 'source-over';
+    ctx.restore();
   }
 };
 
@@ -65,9 +68,8 @@ export const generatePolaroid = async (
   file: File, 
   config: EditConfig
 ): Promise<string> => {
-  // Get dimensions based on Frame Type
+  // 1. Setup Canvas with Target Dimensions
   const dims = FRAME_DIMENSIONS[config.frameType];
-
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
   
@@ -76,82 +78,100 @@ export const generatePolaroid = async (
   canvas.width = dims.width;
   canvas.height = dims.height;
 
-  // --- Step 1: Draw Paper Body ---
-  ctx.fillStyle = '#fdfbf7'; 
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  
-  // Texture
-  ctx.fillStyle = 'rgba(0,0,0,0.02)';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  // --- Step 2: Process User Photo ---
+  // 2. Load Image
   const objectUrl = URL.createObjectURL(file);
   const img = await loadImage(objectUrl);
   URL.revokeObjectURL(objectUrl);
 
+  // 3. Draw Paper Base
+  ctx.fillStyle = '#fdfbf7'; 
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Paper Texture (Subtle Noise)
+  ctx.fillStyle = 'rgba(0,0,0,0.02)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // 4. Define Photo Area
+  const photoX = dims.sidePad;
+  const photoY = dims.topPad;
   const photoW = dims.photoSize;
   const photoH = dims.height - dims.topPad - dims.bottomPad;
 
-  const photoCanvas = document.createElement('canvas');
-  photoCanvas.width = photoW;
-  photoCanvas.height = photoH;
-  const photoCtx = photoCanvas.getContext('2d');
-  
-  if (!photoCtx) throw new Error('Photo context failed');
-
-  photoCtx.fillStyle = '#1a1a1a';
-  photoCtx.fillRect(0, 0, photoW, photoH);
-
-  photoCtx.save();
-  
-  // Transformation Matrix matching CSS:
-  // CSS: translate(x, y) rotate(r) scale(s)
-  // This physically translates the element (moving its origin), then rotates it, then scales it.
-  // In Canvas, we start at Center (since CSS transform-origin is usually center).
-  
-  // 1. Move to Center + Offset (Global translation)
-  photoCtx.translate((photoW / 2) + config.x, (photoH / 2) + config.y);
-  
-  // 2. Rotate (at the new origin)
-  photoCtx.rotate((config.rotation * Math.PI) / 180);
-  
-  // 3. Scale (at the new origin)
-  photoCtx.scale(config.scale, config.scale);
-  
-  // 4. Draw image centered at the origin
-  photoCtx.drawImage(img, -img.width / 2, -img.height / 2);
-  
-  photoCtx.restore();
-
-  applyFilterToContext(photoCtx, photoW, photoH, config.filter);
-
-  // --- Step 3: Composite ---
-  ctx.shadowColor = 'rgba(0,0,0,0.2)';
-  ctx.shadowBlur = 4;
-  ctx.shadowOffsetX = 1;
-  ctx.shadowOffsetY = 1;
-  
-  ctx.drawImage(photoCanvas, dims.sidePad, dims.topPad);
-  
-  ctx.shadowColor = 'transparent';
-
-  // --- Step 4: Caption ---
-  ctx.fillStyle = '#2c2c2c'; 
-  ctx.font = '24px "Courier Prime", monospace';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  
-  const textContent = config.caption.trim() || new Date().toLocaleDateString('en-US', { 
-    year: '2-digit', month: '2-digit', day: '2-digit' 
-  }).replace(/\//g, ' . ');
-
+  // 5. Draw Photo (Clipped)
   ctx.save();
-  // Position text in the bottom padding area
-  const textY = dims.height - (dims.bottomPad / 2);
-  ctx.translate(canvas.width / 2, textY);
-  ctx.rotate((Math.random() * 0.04) - 0.02); 
-  ctx.fillText(textContent, 0, 0);
+  ctx.beginPath();
+  ctx.rect(photoX, photoY, photoW, photoH);
+  ctx.clip();
+
+  // 5.1 Draw Background for photo area (in case image doesn't cover)
+  ctx.fillStyle = '#1a1a1a';
+  ctx.fillRect(photoX, photoY, photoW, photoH);
+
+  // 5.2 Transformations
+  // Move origin to center of Photo Area
+  ctx.translate(photoX + photoW / 2, photoY + photoH / 2);
+  
+  // Apply User Transforms (Pan, Rotate, Scale)
+  ctx.translate(config.x, config.y);
+  ctx.rotate((config.rotation * Math.PI) / 180);
+  ctx.scale(config.scale, config.scale);
+  
+  // Draw Image Centered at Origin
+  ctx.drawImage(img, -img.width / 2, -img.height / 2);
+  
+  // 5.3 Apply Filter (Must be done on the photo area)
+  // Since we are transformed, we need to be careful. 
+  // It's easier to apply filters to the whole canvas masked by the clip, 
+  // but `getImageData` ignores clip.
+  // Strategy: Draw to offscreen canvas if we need pixel manipulation, or just apply overlays.
+  // For simplicity and performance in this demo, we apply global filter logic or simple overlays.
+  // However, to match the preview exactly, let's restore and apply filter to the rect.
   ctx.restore();
 
-  return canvas.toDataURL('image/jpeg', 0.9);
+  // Apply Pixel Filters to the photo region
+  // Note: getImageData gets device pixels.
+  const pixels = ctx.getImageData(photoX, photoY, photoW, photoH);
+  // Create a temporary canvas to process pixels
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = photoW;
+  tempCanvas.height = photoH;
+  const tempCtx = tempCanvas.getContext('2d');
+  if (tempCtx) {
+     tempCtx.putImageData(pixels, 0, 0);
+     applyFilterToContext(tempCtx, photoW, photoH, config.filter);
+     // Draw back
+     ctx.drawImage(tempCanvas, photoX, photoY);
+  }
+
+  // 6. Draw Inner Shadow (Inset shadow for depth)
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(photoX, photoY, photoW, photoH);
+  ctx.clip();
+  ctx.shadowColor = 'rgba(0,0,0,0.2)';
+  ctx.shadowBlur = 10;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 2;
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+  ctx.strokeRect(photoX - 2, photoY - 2, photoW + 4, photoH + 4);
+  ctx.restore();
+
+  // 7. Caption
+  if (config.caption) {
+    ctx.fillStyle = '#2c2c2c'; 
+    ctx.font = '24px "Courier Prime", monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    
+    // Position text in the bottom padding area
+    const textY = dims.height - (dims.bottomPad / 2);
+    ctx.save();
+    ctx.translate(canvas.width / 2, textY);
+    ctx.rotate((Math.random() * 0.02) - 0.01); // Subtle handwriting vibe
+    ctx.fillText(config.caption, 0, 0);
+    ctx.restore();
+  }
+
+  return canvas.toDataURL('image/jpeg', 0.95);
 };

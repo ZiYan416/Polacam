@@ -31,6 +31,7 @@ export const translations = {
     editorTitle: "Edit Lab",
     frameLabel: "VIEWFINDER",
     dragHint: "Drag / Pinch",
+    resetLayout: "Tidy Up",
     nav: {
       camera: "Cam",
       gallery: "Vibes"
@@ -83,6 +84,7 @@ export const translations = {
     editorTitle: "修图室",
     frameLabel: "取景框",
     dragHint: "拖拽 / 双指缩放",
+    resetLayout: "整理桌面",
     nav: {
       camera: "拍摄",
       gallery: "相册"
