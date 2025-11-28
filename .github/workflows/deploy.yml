@@ -37,6 +37,10 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          # Vite 构建时会自动读取以 VITE_ 开头的环境变量并打包进 JS 里
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_KEY: ${{ secrets.VITE_SUPABASE_KEY }}
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
