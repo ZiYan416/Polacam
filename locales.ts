@@ -67,12 +67,27 @@ export const translations = {
       logout: "Log Out",
       login: "Log In / Sign Up",
       bioPlaceholder: "Write a bio...",
-      save: "Save Profile"
+      save: "Save Profile",
+      uploadAvatar: "Change Avatar"
     },
     presets: [
       "Core Memory 🔒", "Main Character Energy ✨", "Touch Grass 🌿", "Chaos Mode ⚡️", "Vibe Check",
       "Pov: You're here", "Living Rent Free", "Serotonin Boost", "No Thoughts", "Just Vibes"
-    ]
+    ],
+    about: {
+      title: "About Polacam",
+      desc: "A digital tribute to the instant photography era.",
+      github: "Visit on GitHub",
+      contact: "Contact Developer"
+    },
+    theme: {
+      dark: "Dark Mode",
+      light: "Light Mode"
+    },
+    welcome: {
+      back: "Welcome back, ",
+      join: "Welcome to Polacam, "
+    }
   },
   zh: {
     appTitle: "POLACAM",
@@ -134,12 +149,27 @@ export const translations = {
       logout: "登出",
       login: "登录 / 注册",
       bioPlaceholder: "写下你的个性签名...",
-      save: "保存资料"
+      save: "保存资料",
+      uploadAvatar: "更换头像"
     },
     presets: [
       "今日份甜 🍭", "这是什么神仙滤镜", "保持热爱 奔赴山海", "落日归山海 🌄", "碎片 +1",
       "营业一下 📸", "好心情加载中...", "又是被治愈的一天", "Stay Real", "Life is Good"
-    ]
+    ],
+    about: {
+      title: "关于 Polacam",
+      desc: "致敬即时成像时代的数字复刻品。",
+      github: "访问 GitHub",
+      contact: "联系开发者"
+    },
+    theme: {
+      dark: "深色模式",
+      light: "浅色模式"
+    },
+    welcome: {
+      back: "欢迎回来，",
+      join: "欢迎加入 Polacam，"
+    }
   }
 };
 

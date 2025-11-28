@@ -38,10 +38,11 @@ const Camera: React.FC<CameraProps> = ({ onCapture, isProcessing, lang }) => {
       <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
 
       {/* --- Main Body Container --- */}
-      <div className="relative bg-[#f0eee6] rounded-t-[2.5rem] md:rounded-t-[3rem] rounded-b-xl shadow-[0_-10px_40px_rgba(0,0,0,0.3)] p-1 pb-8 md:pb-12 pt-0 overflow-hidden">
+      {/* Dark Mode: Body becomes dark grey, texture stays dark or goes darker */}
+      <div className="relative bg-[#f0eee6] dark:bg-[#222] rounded-t-[2.5rem] md:rounded-t-[3rem] rounded-b-xl shadow-[0_-10px_40px_rgba(0,0,0,0.3)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.6)] p-1 pb-8 md:pb-12 pt-0 overflow-hidden transition-colors duration-300">
         
         {/* Leather Texture */}
-        <div className="absolute top-[35%] bottom-0 left-0 right-0 bg-[#1a1a1a] rounded-t-[1rem] z-0" 
+        <div className="absolute top-[35%] bottom-0 left-0 right-0 bg-[#1a1a1a] dark:bg-black rounded-t-[1rem] z-0 transition-colors duration-300" 
              style={{
                backgroundImage: `radial-gradient(hsla(0, 0%, 100%, 0.05) 1px, transparent 0)`,
                backgroundSize: '4px 4px'
@@ -105,8 +106,9 @@ const Camera: React.FC<CameraProps> = ({ onCapture, isProcessing, lang }) => {
              </div>
           </div>
 
-          <div className="mt-4 md:mt-6 text-[#444] font-mono text-[10px] md:text-xs tracking-[0.3em] opacity-40">
-             {t(lang, 'tagline')}
+          {/* Keep English Tagline as requested, adapt color for dark mode */}
+          <div className="mt-4 md:mt-6 text-[#444] dark:text-[#666] font-mono text-[10px] md:text-xs tracking-[0.3em] opacity-40 transition-colors">
+             DIGITAL ANALOG
           </div>
 
         </div>

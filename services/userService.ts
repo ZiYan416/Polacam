@@ -29,6 +29,7 @@ export const updateProfile = async (userId: string, updates: Partial<UserProfile
       .update({
         username: updates.username,
         bio: updates.bio,
+        avatar_url: updates.avatar_url, // Allow updating avatar_url
         updated_at: new Date().toISOString(),
       })
       .eq('id', userId)
@@ -39,6 +40,28 @@ export const updateProfile = async (userId: string, updates: Partial<UserProfile
     return data as UserProfile;
   } catch (error) {
     console.error('Error updating profile:', error);
+    return null;
+  }
+};
+
+export const uploadAvatar = async (userId: string, file: File): Promise<string | null> => {
+  try {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `avatar_${Date.now()}.${fileExt}`;
+    const filePath = `${userId}/${fileName}`;
+
+    // Upload to Supabase Storage
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(filePath, file, { upsert: true });
+
+    if (uploadError) throw uploadError;
+
+    // Get Public URL
+    const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
+    return data.publicUrl;
+  } catch (error) {
+    console.error('Error uploading avatar:', error);
     return null;
   }
 };

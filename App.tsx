@@ -12,12 +12,14 @@ import DraggablePhoto from './components/DraggablePhoto';
 import Guide from './components/Guide';
 import AuthModal from './components/AuthModal';
 import EditProfileModal from './components/EditProfileModal';
+import AboutModal from './components/AboutModal';
+import Notification from './components/Notification';
 import { generatePolaroid } from './services/imageProcessing';
 import { savePhoto, getPhotos, deletePhoto } from './services/storageService';
 import { getProfile } from './services/userService';
 import { supabase } from './supabaseClient';
 import { Photo, EditConfig, Language, FloatingPhoto, UserProfile } from './types';
-import { Grid, Camera as CameraIcon, Sparkles, LayoutGrid } from 'lucide-react';
+import { Grid, Camera as CameraIcon, Sparkles, LayoutGrid, Sun, Moon } from 'lucide-react';
 import { t } from './locales';
 
 type View = 'camera' | 'gallery';
@@ -36,10 +38,10 @@ const AmbientText = ({ lang }: { lang: Language }) => {
   }, [lang]);
 
   return (
-    <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 opacity-30 select-none">
+    <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 opacity-30 dark:opacity-20 select-none">
        <div key={textIndex} className="animate-fade-in text-center">
           <Sparkles className="mx-auto mb-2 text-gray-400" size={24} />
-          <h2 className="text-3xl md:text-5xl font-mono font-bold text-gray-400 tracking-widest uppercase">
+          <h2 className="text-3xl md:text-5xl font-mono font-bold text-gray-400 dark:text-gray-500 tracking-widest uppercase">
             {texts[textIndex]}
           </h2>
        </div>
@@ -48,8 +50,12 @@ const AmbientText = ({ lang }: { lang: Language }) => {
 };
 
 function App() {
+  // Theme State
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
+  // Logic State
   const [photos, setPhotos] = useState<Photo[]>([]);
-  const [lang, setLang] = useState<Language>('zh'); // Default to Chinese as requested
+  const [lang, setLang] = useState<Language>('zh'); 
   const [currentView, setCurrentView] = useState<View>('camera');
   
   const [showGuide, setShowGuide] = useState(false);
@@ -62,9 +68,22 @@ function App() {
   const [session, setSession] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   
+  // New UI States
+  const [showAboutModal, setShowAboutModal] = useState(false);
+  const [notification, setNotification] = useState<string | null>(null);
+  
   // --- Persistent Floating State ---
   const [floatingPhotos, setFloatingPhotos] = useState<FloatingPhoto[]>([]);
   const zIndexCounter = useRef(100);
+
+  // 0. Theme Effect
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [theme]);
 
   // 1. Initialize Auth Listener
   useEffect(() => {
@@ -77,12 +96,15 @@ function App() {
       setSession(session);
       if (session) {
          fetchUserProfile(session.user.id);
-         // Reload photos when user switches
          getPhotos(session.user.id).then(setPhotos);
+         // Don't show guide if logged in
+         setShowGuide(false);
       } else {
          setUserProfile(null);
-         // Load guest photos
-         getPhotos().then(setPhotos);
+         getPhotos().then(data => {
+            setPhotos(data);
+            if (data.length === 0) setTimeout(() => setShowGuide(true), 1500);
+         });
       }
     });
 
@@ -94,18 +116,23 @@ function App() {
     if (profile) setUserProfile(profile);
   };
 
-  // 2. Load Photos (Initial)
+  const handleLoginSuccess = (isSignUp: boolean) => {
+    if (!isSignUp && userProfile) {
+        // Will be triggered after profile load, or we can just show generic
+    }
+  };
+
+  // Show welcome notification when profile loads
   useEffect(() => {
-    const userId = session?.user?.id;
-    getPhotos(userId).then(data => {
-      setPhotos(data);
-      if (data.length === 0 && !session) setTimeout(() => setShowGuide(true), 1500);
-    });
-  }, [session]);
+    if (userProfile && session) {
+        setNotification(`${t(lang, 'welcome.back')}${userProfile.username}`);
+    }
+  }, [userProfile, session, lang]);
+
 
   const toggleLang = () => setLang(prev => prev === 'en' ? 'zh' : 'en');
+  const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
-  // Ejection Origin Calculation
   const getEjectOrigin = () => {
     const isMobile = window.innerWidth < 768;
     const cardWidth = isMobile ? 180 : 280;
@@ -171,7 +198,6 @@ function App() {
   }, [selectedFile]);
 
   // --- Handlers ---
-
   const handleUpdateFloating = (id: string, updates: Partial<FloatingPhoto>) => {
     setFloatingPhotos(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
   };
@@ -253,8 +279,13 @@ function App() {
   };
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-[#e0dfd5] font-sans overflow-hidden fixed inset-0">
+    <div className="h-screen w-screen flex flex-col bg-[#e0dfd5] dark:bg-[#121212] font-sans overflow-hidden fixed inset-0 transition-colors duration-300">
       
+      {/* Toast Notification */}
+      {notification && (
+        <Notification message={notification} onClose={() => setNotification(null)} />
+      )}
+
       {showGuide && <Guide onDismiss={() => setShowGuide(false)} lang={lang} />}
       
       {currentView === 'camera' && floatingPhotos.length === 0 && !selectedFile && !showGuide && (
@@ -263,26 +294,40 @@ function App() {
 
       {/* --- Header --- */}
       <header className="absolute top-0 left-0 right-0 z-[1000] p-4 flex justify-between items-center pointer-events-none">
-        <div className="bg-white/90 backdrop-blur px-4 py-2 rounded-full shadow-sm pointer-events-auto flex items-center gap-2">
+        
+        {/* Logo / Brand */}
+        <button 
+           onClick={() => setShowAboutModal(true)}
+           className="bg-white/90 dark:bg-black/80 backdrop-blur px-4 py-2 rounded-full shadow-sm pointer-events-auto flex items-center gap-2 hover:scale-105 transition-transform"
+        >
             <div className="w-4 h-4 bg-pola-red rounded-full animate-pulse"></div>
-            <span className="font-mono font-bold tracking-tighter text-sm md:text-base">{t(lang, 'appTitle')}</span>
-        </div>
+            <span className="font-mono font-bold tracking-tighter text-sm md:text-base dark:text-white">{t(lang, 'appTitle')}</span>
+        </button>
 
         <div className="flex gap-3 pointer-events-auto">
              <button 
                 onClick={handleResetLayout}
                 disabled={floatingPhotos.length === 0}
-                className={`bg-white/90 backdrop-blur p-2 rounded-full shadow-sm transition-all hover:scale-110 
-                   ${floatingPhotos.length === 0 ? 'text-gray-300 cursor-default hover:scale-100' : 'text-gray-600 hover:text-pola-accent cursor-pointer'}
+                className={`bg-white/90 dark:bg-black/80 backdrop-blur p-2 rounded-full shadow-sm transition-all hover:scale-110 
+                   ${floatingPhotos.length === 0 ? 'text-gray-300 dark:text-gray-600 cursor-default hover:scale-100' : 'text-gray-600 dark:text-gray-300 hover:text-pola-accent cursor-pointer'}
                 `}
                 title={t(lang, 'resetLayout')}
              >
                 <LayoutGrid size={20} />
              </button>
 
+             {/* Theme Toggle */}
+             <button 
+                onClick={toggleTheme}
+                className="bg-white/90 dark:bg-black/80 backdrop-blur p-2 rounded-full shadow-sm text-gray-600 dark:text-white transition-all hover:scale-110"
+                title={t(lang, theme === 'light' ? 'theme.dark' : 'theme.light')}
+             >
+                 {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+             </button>
+
              <button 
                onClick={toggleLang}
-               className="bg-white/90 backdrop-blur p-2 rounded-full shadow-sm text-sm font-bold w-10 h-10 flex items-center justify-center hover:scale-110 transition-transform"
+               className="bg-white/90 dark:bg-black/80 backdrop-blur p-2 rounded-full shadow-sm text-sm font-bold w-10 h-10 flex items-center justify-center hover:scale-110 transition-transform dark:text-white"
              >
                {lang === 'en' ? '中' : 'En'}
              </button>
@@ -290,7 +335,7 @@ function App() {
              <button 
                 onClick={() => setCurrentView(v => v === 'camera' ? 'gallery' : 'camera')}
                 className={`p-2 rounded-full shadow-sm w-10 h-10 flex items-center justify-center transition-all hover:scale-110
-                  ${currentView === 'gallery' ? 'bg-black text-white' : 'bg-white text-black'}
+                  ${currentView === 'gallery' ? 'bg-black text-white dark:bg-white dark:text-black' : 'bg-white text-black dark:bg-black dark:text-white'}
                 `}
              >
                 {currentView === 'gallery' ? <CameraIcon size={18} /> : <Grid size={18} />}
@@ -303,7 +348,7 @@ function App() {
         
         {/* Gallery View */}
         {currentView === 'gallery' && (
-          <div className="absolute inset-0 z-20 bg-[#f4f2ef] overflow-y-auto animate-fade-in scroll-smooth">
+          <div className="absolute inset-0 z-20 bg-[#f4f2ef] dark:bg-[#0a0a0a] overflow-y-auto animate-fade-in scroll-smooth transition-colors duration-300">
              <Gallery 
                 photos={photos} 
                 onToggle={handleToggleSave} 
@@ -316,7 +361,7 @@ function App() {
           </div>
         )}
 
-        {/* Floating Photos (Only visible in Camera view) */}
+        {/* Floating Photos */}
         {currentView === 'camera' && floatingPhotos.map((photo) => (
           <DraggablePhoto 
             key={photo.id} 
@@ -354,7 +399,11 @@ function App() {
       )}
 
       {showAuthModal && (
-        <AuthModal onClose={() => setShowAuthModal(false)} lang={lang} />
+        <AuthModal 
+           onClose={() => setShowAuthModal(false)} 
+           lang={lang} 
+           onLoginSuccess={handleLoginSuccess}
+        />
       )}
 
       {showEditProfileModal && userProfile && (
@@ -364,6 +413,10 @@ function App() {
           onClose={() => setShowEditProfileModal(false)}
           onUpdate={setUserProfile}
         />
+      )}
+
+      {showAboutModal && (
+        <AboutModal onClose={() => setShowAboutModal(false)} lang={lang} />
       )}
     </div>
   );
