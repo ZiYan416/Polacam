@@ -14,11 +14,13 @@ const Notification: React.FC<NotificationProps> = ({ message, onClose }) => {
   }, [onClose]);
 
   return (
-    <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[7000] animate-slide-down">
-      <div className="bg-black/80 dark:bg-white/90 backdrop-blur-md text-white dark:text-black px-6 py-3 rounded-full shadow-2xl flex items-center gap-3">
-        <Sparkles size={18} className="text-yellow-400 dark:text-yellow-600" />
-        <span className="font-mono text-sm font-bold">{message}</span>
-        <button onClick={onClose} className="opacity-50 hover:opacity-100 ml-2">
+    <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[7000] animate-slide-down w-auto max-w-[90vw]">
+      <div className="bg-white/80 dark:bg-zinc-800/80 backdrop-blur-xl border border-white/20 dark:border-zinc-700/50 text-zinc-800 dark:text-zinc-100 px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 transition-colors duration-300">
+        <div className="bg-yellow-400/20 p-1.5 rounded-full">
+           <Sparkles size={16} className="text-yellow-600 dark:text-yellow-400" />
+        </div>
+        <span className="font-mono text-sm font-bold tracking-tight">{message}</span>
+        <button onClick={onClose} className="opacity-50 hover:opacity-100 ml-2 p-1 hover:bg-black/5 dark:hover:bg-white/10 rounded-full transition-colors">
            <X size={14} />
         </button>
       </div>

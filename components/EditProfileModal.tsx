@@ -51,7 +51,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ profile, lang, onCl
 
   return (
     <div className="fixed inset-0 z-[6000] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-[#1a1a1a] dark:text-gray-100 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-fade-in relative p-6">
+      <div className="bg-white dark:bg-zinc-900 dark:text-zinc-100 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-fade-in relative p-6 border dark:border-zinc-800">
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-black dark:hover:text-white">
           <X size={24} />
         </button>
@@ -60,13 +60,13 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ profile, lang, onCl
 
         <div className="flex flex-col items-center mb-6">
             <div 
-                className="w-24 h-24 rounded-full bg-gray-200 dark:bg-gray-800 relative group cursor-pointer overflow-hidden border-4 border-white dark:border-gray-700 shadow-md"
+                className="w-24 h-24 rounded-full bg-gray-200 dark:bg-zinc-800 relative group cursor-pointer overflow-hidden border-4 border-white dark:border-zinc-700 shadow-md"
                 onClick={handleAvatarClick}
             >
                 {profile.avatar_url ? (
                     <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
                 ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-500">
+                    <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-zinc-500">
                         <Camera size={32} />
                     </div>
                 )}
@@ -88,23 +88,23 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ profile, lang, onCl
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-mono text-gray-500 dark:text-gray-400 uppercase mb-1">Username</label>
+            <label className="block text-xs font-mono text-gray-500 dark:text-zinc-400 uppercase mb-1">Username</label>
             <input
               type="text"
               value={username}
               onChange={e => setUsername(e.target.value)}
-              className="w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-lg px-3 py-2 font-mono text-sm focus:ring-2 focus:ring-black dark:focus:ring-white outline-none transition-colors"
+              className="w-full border border-gray-300 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded-lg px-3 py-2 font-mono text-sm focus:ring-2 focus:ring-black dark:focus:ring-white outline-none transition-colors"
               minLength={3}
               required
             />
           </div>
 
           <div>
-            <label className="block text-xs font-mono text-gray-500 dark:text-gray-400 uppercase mb-1">Bio</label>
+            <label className="block text-xs font-mono text-gray-500 dark:text-zinc-400 uppercase mb-1">Bio</label>
             <textarea
               value={bio}
               onChange={e => setBio(e.target.value)}
-              className="w-full border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-lg px-3 py-2 font-mono text-sm focus:ring-2 focus:ring-black dark:focus:ring-white outline-none h-24 resize-none transition-colors"
+              className="w-full border border-gray-300 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded-lg px-3 py-2 font-mono text-sm focus:ring-2 focus:ring-black dark:focus:ring-white outline-none h-24 resize-none transition-colors"
               placeholder={t(lang, 'profile.bioPlaceholder')}
               maxLength={100}
             />
@@ -114,7 +114,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ profile, lang, onCl
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-black dark:bg-white text-white dark:text-black py-3 rounded-lg font-bold hover:opacity-90 transition-opacity flex justify-center items-center"
+            className="w-full bg-black dark:bg-zinc-100 text-white dark:text-black py-3 rounded-lg font-bold hover:opacity-90 transition-opacity flex justify-center items-center"
           >
             {loading ? <Loader2 className="animate-spin" size={18} /> : t(lang, 'profile.save')}
           </button>

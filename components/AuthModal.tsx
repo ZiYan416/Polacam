@@ -57,7 +57,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, lang, onLoginSuccess }) 
 
   return (
     <div className="fixed inset-0 z-[6000] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-[#1a1a1a] dark:text-gray-100 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-fade-in relative transition-colors duration-300">
+      <div className="bg-white dark:bg-zinc-900 dark:text-zinc-100 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-fade-in relative transition-colors duration-300 border dark:border-zinc-800">
         <button 
             onClick={onClose} 
             className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 dark:hover:text-white"
@@ -73,20 +73,20 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, lang, onLoginSuccess }) 
             </h2>
 
             {error && (
-                <div className="bg-red-50 dark:bg-red-900/30 text-red-500 dark:text-red-300 text-sm p-3 rounded mb-4 border border-red-100 dark:border-red-900">
+                <div className="bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-300 text-sm p-3 rounded mb-4 border border-red-100 dark:border-red-900/50">
                     {error}
                 </div>
             )}
             
             {message && (
-                <div className="bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-300 text-sm p-3 rounded mb-4 border border-green-100 dark:border-green-900">
+                <div className="bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-300 text-sm p-3 rounded mb-4 border border-green-100 dark:border-green-900/50">
                     {message}
                 </div>
             )}
 
             <form onSubmit={handleAuth} className="space-y-4">
                 <div className="space-y-2">
-                    <label className="text-xs font-mono text-gray-500 dark:text-gray-400 uppercase">Email</label>
+                    <label className="text-xs font-mono text-gray-500 dark:text-zinc-400 uppercase">Email</label>
                     <div className="relative">
                         <Mail className="absolute left-3 top-3 text-gray-400" size={18} />
                         <input 
@@ -94,14 +94,14 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, lang, onLoginSuccess }) 
                             required
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent outline-none transition-colors"
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded-lg focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent outline-none transition-colors"
                             placeholder="hello@example.com"
                         />
                     </div>
                 </div>
 
                 <div className="space-y-2">
-                    <label className="text-xs font-mono text-gray-500 dark:text-gray-400 uppercase">Password</label>
+                    <label className="text-xs font-mono text-gray-500 dark:text-zinc-400 uppercase">Password</label>
                     <div className="relative">
                         <Lock className="absolute left-3 top-3 text-gray-400" size={18} />
                         <input 
@@ -109,7 +109,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, lang, onLoginSuccess }) 
                             required
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-white rounded-lg focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent outline-none transition-colors"
+                            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white rounded-lg focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent outline-none transition-colors"
                             placeholder="••••••••"
                             minLength={6}
                         />
@@ -119,7 +119,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, lang, onLoginSuccess }) 
                 <button 
                     type="submit" 
                     disabled={loading}
-                    className="w-full bg-black dark:bg-white text-white dark:text-black py-3 rounded-lg font-bold hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
+                    className="w-full bg-black dark:bg-zinc-100 text-white dark:text-black py-3 rounded-lg font-bold hover:bg-gray-800 dark:hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2"
                 >
                     {loading && <Loader2 className="animate-spin" size={18} />}
                     {isSignUp 
@@ -131,7 +131,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, lang, onLoginSuccess }) 
             <div className="mt-6 text-center">
                 <button 
                     onClick={() => { setIsSignUp(!isSignUp); setError(null); setMessage(null); }}
-                    className="text-sm text-gray-500 dark:text-gray-400 underline hover:text-black dark:hover:text-white"
+                    className="text-sm text-gray-500 dark:text-zinc-400 underline hover:text-black dark:hover:text-white"
                 >
                     {isSignUp 
                         ? (lang === 'zh' ? '已有账号？去登录' : 'Already have an account? Log in') 

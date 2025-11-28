@@ -38,10 +38,9 @@ const AmbientText = ({ lang }: { lang: Language }) => {
   }, [lang]);
 
   return (
-    <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 opacity-30 dark:opacity-20 select-none">
-       <div key={textIndex} className="animate-fade-in text-center">
-          <Sparkles className="mx-auto mb-2 text-gray-400" size={24} />
-          <h2 className="text-3xl md:text-5xl font-mono font-bold text-gray-400 dark:text-gray-500 tracking-widest uppercase">
+    <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 select-none overflow-hidden">
+       <div key={textIndex} className="animate-fade-in text-center opacity-10 dark:opacity-5 transition-opacity duration-500">
+          <h2 className="text-4xl md:text-8xl lg:text-9xl font-black text-zinc-900 dark:text-zinc-100 tracking-tighter uppercase whitespace-nowrap scale-105 transform">
             {texts[textIndex]}
           </h2>
        </div>
@@ -279,7 +278,7 @@ function App() {
   };
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-[#e0dfd5] dark:bg-[#121212] font-sans overflow-hidden fixed inset-0 transition-colors duration-300">
+    <div className="h-screen w-screen flex flex-col bg-[#e0dfd5] dark:bg-zinc-950 font-sans overflow-hidden fixed inset-0 transition-colors duration-500">
       
       {/* Toast Notification */}
       {notification && (
@@ -298,18 +297,18 @@ function App() {
         {/* Logo / Brand */}
         <button 
            onClick={() => setShowAboutModal(true)}
-           className="bg-white/90 dark:bg-black/80 backdrop-blur px-4 py-2 rounded-full shadow-sm pointer-events-auto flex items-center gap-2 hover:scale-105 transition-transform"
+           className="bg-white/90 dark:bg-zinc-800/80 backdrop-blur px-4 py-2 rounded-full shadow-sm pointer-events-auto flex items-center gap-2 hover:scale-105 transition-transform"
         >
             <div className="w-4 h-4 bg-pola-red rounded-full animate-pulse"></div>
-            <span className="font-mono font-bold tracking-tighter text-sm md:text-base dark:text-white">{t(lang, 'appTitle')}</span>
+            <span className="font-mono font-bold tracking-tighter text-sm md:text-base dark:text-zinc-100">{t(lang, 'appTitle')}</span>
         </button>
 
         <div className="flex gap-3 pointer-events-auto">
              <button 
                 onClick={handleResetLayout}
                 disabled={floatingPhotos.length === 0}
-                className={`bg-white/90 dark:bg-black/80 backdrop-blur p-2 rounded-full shadow-sm transition-all hover:scale-110 
-                   ${floatingPhotos.length === 0 ? 'text-gray-300 dark:text-gray-600 cursor-default hover:scale-100' : 'text-gray-600 dark:text-gray-300 hover:text-pola-accent cursor-pointer'}
+                className={`bg-white/90 dark:bg-zinc-800/80 backdrop-blur p-2 rounded-full shadow-sm transition-all hover:scale-110 
+                   ${floatingPhotos.length === 0 ? 'text-gray-300 dark:text-zinc-600 cursor-default hover:scale-100' : 'text-gray-600 dark:text-zinc-300 hover:text-pola-accent cursor-pointer'}
                 `}
                 title={t(lang, 'resetLayout')}
              >
@@ -319,7 +318,7 @@ function App() {
              {/* Theme Toggle */}
              <button 
                 onClick={toggleTheme}
-                className="bg-white/90 dark:bg-black/80 backdrop-blur p-2 rounded-full shadow-sm text-gray-600 dark:text-white transition-all hover:scale-110"
+                className="bg-white/90 dark:bg-zinc-800/80 backdrop-blur p-2 rounded-full shadow-sm text-gray-600 dark:text-zinc-200 transition-all hover:scale-110"
                 title={t(lang, theme === 'light' ? 'theme.dark' : 'theme.light')}
              >
                  {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
@@ -327,7 +326,7 @@ function App() {
 
              <button 
                onClick={toggleLang}
-               className="bg-white/90 dark:bg-black/80 backdrop-blur p-2 rounded-full shadow-sm text-sm font-bold w-10 h-10 flex items-center justify-center hover:scale-110 transition-transform dark:text-white"
+               className="bg-white/90 dark:bg-zinc-800/80 backdrop-blur p-2 rounded-full shadow-sm text-sm font-bold w-10 h-10 flex items-center justify-center hover:scale-110 transition-transform dark:text-zinc-200"
              >
                {lang === 'en' ? '中' : 'En'}
              </button>
@@ -335,7 +334,7 @@ function App() {
              <button 
                 onClick={() => setCurrentView(v => v === 'camera' ? 'gallery' : 'camera')}
                 className={`p-2 rounded-full shadow-sm w-10 h-10 flex items-center justify-center transition-all hover:scale-110
-                  ${currentView === 'gallery' ? 'bg-black text-white dark:bg-white dark:text-black' : 'bg-white text-black dark:bg-black dark:text-white'}
+                  ${currentView === 'gallery' ? 'bg-black text-white dark:bg-zinc-100 dark:text-zinc-900' : 'bg-white text-black dark:bg-zinc-800 dark:text-zinc-100'}
                 `}
              >
                 {currentView === 'gallery' ? <CameraIcon size={18} /> : <Grid size={18} />}
@@ -348,7 +347,7 @@ function App() {
         
         {/* Gallery View */}
         {currentView === 'gallery' && (
-          <div className="absolute inset-0 z-20 bg-[#f4f2ef] dark:bg-[#0a0a0a] overflow-y-auto animate-fade-in scroll-smooth transition-colors duration-300">
+          <div className="absolute inset-0 z-20 bg-[#f4f2ef] dark:bg-zinc-900 overflow-y-auto animate-fade-in scroll-smooth transition-colors duration-300">
              <Gallery 
                 photos={photos} 
                 onToggle={handleToggleSave} 
