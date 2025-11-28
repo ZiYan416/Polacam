@@ -1,6 +1,7 @@
+
 /**
  * @file App.tsx
- * @description Main Controller. Manages persistent floating state and Authentication.
+ * @description Main Controller. Manages persistent floating state and user profiles.
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -9,14 +10,15 @@ import Gallery from './components/Gallery';
 import PhotoEditor from './components/PhotoEditor';
 import DraggablePhoto from './components/DraggablePhoto';
 import Guide from './components/Guide';
-import AuthModal from './components/AuthModal.tsx'; // Import Auth Modal
+import AuthModal from './components/AuthModal';
+import EditProfileModal from './components/EditProfileModal';
 import { generatePolaroid } from './services/imageProcessing';
 import { savePhoto, getPhotos, deletePhoto } from './services/storageService';
-import { Photo, EditConfig, Language, FloatingPhoto } from './types';
-import { Grid, Camera as CameraIcon, Sparkles, LayoutGrid, User, LogOut } from 'lucide-react';
+import { getProfile } from './services/userService';
+import { supabase } from './supabaseClient';
+import { Photo, EditConfig, Language, FloatingPhoto, UserProfile } from './types';
+import { Grid, Camera as CameraIcon, Sparkles, LayoutGrid } from 'lucide-react';
 import { t } from './locales';
-import { supabase } from './supabaseClient.ts'; // Import Supabase Client
-import { Session } from '@supabase/supabase-js';
 
 type View = 'camera' | 'gallery';
 
@@ -47,53 +49,59 @@ const AmbientText = ({ lang }: { lang: Language }) => {
 
 function App() {
   const [photos, setPhotos] = useState<Photo[]>([]);
-  const [lang, setLang] = useState<Language>('en'); 
+  const [lang, setLang] = useState<Language>('zh'); // Default to Chinese as requested
   const [currentView, setCurrentView] = useState<View>('camera');
   
   const [showGuide, setShowGuide] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  
-  // --- Auth State ---
-  const [session, setSession] = useState<Session | null>(null);
-  const [showAuthModal, setShowAuthModal] = useState(false);
 
+  // Auth & User State
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showEditProfileModal, setShowEditProfileModal] = useState(false);
+  const [session, setSession] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  
   // --- Persistent Floating State ---
   const [floatingPhotos, setFloatingPhotos] = useState<FloatingPhoto[]>([]);
   const zIndexCounter = useRef(100);
 
-  // Initialize Session
+  // 1. Initialize Auth Listener
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
+      if (session) fetchUserProfile(session.user.id);
     });
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      if (session) {
+         fetchUserProfile(session.user.id);
+         // Reload photos when user switches
+         getPhotos(session.user.id).then(setPhotos);
+      } else {
+         setUserProfile(null);
+         // Load guest photos
+         getPhotos().then(setPhotos);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  // Load Photos based on Session (Hybrid Loading)
+  const fetchUserProfile = async (userId: string) => {
+    const profile = await getProfile(userId);
+    if (profile) setUserProfile(profile);
+  };
+
+  // 2. Load Photos (Initial)
   useEffect(() => {
     const userId = session?.user?.id;
     getPhotos(userId).then(data => {
       setPhotos(data);
-      // Only show guide if no photos and strictly no session (true new user)
-      // or new guest
       if (data.length === 0 && !session) setTimeout(() => setShowGuide(true), 1500);
     });
-  }, [session]); // Reload when session changes
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    // Photos will auto-reload via the useEffect dependency on `session`
-    setCurrentView('camera');
-  };
+  }, [session]);
 
   const toggleLang = () => setLang(prev => prev === 'en' ? 'zh' : 'en');
 
@@ -126,7 +134,6 @@ function App() {
     try {
       const dataUrl = await generatePolaroid(fileToProcess, config);
       
-      // Calculate random final position
       const isMobile = window.innerWidth < 768;
       const cardWidth = isMobile ? 180 : 280;
       const safeW = window.innerWidth - cardWidth - 20;
@@ -138,20 +145,19 @@ function App() {
       zIndexCounter.current += 1;
 
       const newPhoto: FloatingPhoto = {
-        id: crypto.randomUUID(), // Use standard UUID for DB compatibility
+        id: Date.now().toString(),
         dataUrl,
         originalUrl: URL.createObjectURL(fileToProcess),
         createdAt: Date.now(),
         filter: config.filter,
         caption: config.caption,
         frameType: config.frameType,
-        // Floating State
         x: targetX,
         y: targetY,
         rotation: (Math.random() * 10) - 5,
         scale: 1,
         zIndex: zIndexCounter.current,
-        isNew: true, // Trigger animation
+        isNew: true, 
         isSaved: false
       };
       
@@ -164,7 +170,7 @@ function App() {
     }
   }, [selectedFile]);
 
-  // --- Floating Interaction Handlers ---
+  // --- Handlers ---
 
   const handleUpdateFloating = (id: string, updates: Partial<FloatingPhoto>) => {
     setFloatingPhotos(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
@@ -182,7 +188,6 @@ function App() {
   const handleResetSinglePhoto = (id: string) => {
     const isMobile = window.innerWidth < 768;
     const cardWidth = isMobile ? 180 : 280;
-    
     setFloatingPhotos(prev => prev.map(p => {
         if (p.id !== id) return p;
         let newX = p.x;
@@ -198,56 +203,52 @@ function App() {
   const handleResetLayout = () => {
     const isMobile = window.innerWidth < 768;
     const cardW = isMobile ? 180 : 280;
-    const cardH = isMobile ? 220 : 340; 
+    const cardH = isMobile ? 220 : 340;
     const viewportW = window.innerWidth;
-    
     const cols = isMobile ? 2 : Math.max(2, Math.floor((viewportW - 40) / (cardW + 20)));
     const totalGridW = cols * cardW + (cols - 1) * 20;
     const startX = Math.max(10, (viewportW - totalGridW) / 2);
     const startY = 100;
 
-    setFloatingPhotos(prev => {
-        return prev.map((p, index) => {
-            const col = index % cols;
-            const row = Math.floor(index / cols);
-            return {
-                ...p,
-                x: startX + col * (cardW + 20),
-                y: startY + row * (cardH + 20),
-                rotation: (Math.random() * 4) - 2, 
-                scale: 1,
-                zIndex: index + 100 
-            };
-        });
-    });
+    setFloatingPhotos(prev => prev.map((p, index) => {
+        const col = index % cols;
+        const row = Math.floor(index / cols);
+        return {
+            ...p,
+            x: startX + col * (cardW + 20),
+            y: startY + row * (cardH + 20),
+            rotation: (Math.random() * 4) - 2,
+            scale: 1,
+            zIndex: index + 100
+        };
+    }));
     zIndexCounter.current = 100 + floatingPhotos.length;
   };
 
-  // --- Gallery Handlers (Hybrid) ---
-
   const handleToggleSave = async (photo: Photo) => {
-    const isAlreadySaved = photos.some(p => p.id === photo.id);
     const userId = session?.user?.id;
+    const isAlreadySaved = photos.some(p => p.id === photo.id);
 
-    try {
-        if (isAlreadySaved) {
-            // Unsave
+    if (isAlreadySaved) {
+        try {
             await deletePhoto(photo.id, userId);
             setPhotos(prev => prev.filter(p => p.id !== photo.id));
             setFloatingPhotos(prev => prev.map(p => 
                 p.id === photo.id ? { ...p, isSaved: false } : p
             ));
-        } else {
-            // Save
+        } catch (e) {
+            console.error("Failed to unsave", e);
+        }
+    } else {
+        try {
             await savePhoto(photo, userId);
             setPhotos(prev => [photo, ...prev]);
             setFloatingPhotos(prev => prev.map(p => 
                 p.id === photo.id ? { ...p, isSaved: true } : p
             ));
+        } catch (e) {
+            console.error("Failed to save", e);
         }
-    } catch (e) {
-        console.error("Failed to toggle save", e);
-        alert(lang === 'zh' ? '同步失败，请重试' : 'Sync failed, try again');
     }
   };
 
@@ -255,7 +256,6 @@ function App() {
     <div className="h-screen w-screen flex flex-col bg-[#e0dfd5] font-sans overflow-hidden fixed inset-0">
       
       {showGuide && <Guide onDismiss={() => setShowGuide(false)} lang={lang} />}
-      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} lang={lang} />}
       
       {currentView === 'camera' && floatingPhotos.length === 0 && !selectedFile && !showGuide && (
          <AmbientText lang={lang} />
@@ -264,12 +264,11 @@ function App() {
       {/* --- Header --- */}
       <header className="absolute top-0 left-0 right-0 z-[1000] p-4 flex justify-between items-center pointer-events-none">
         <div className="bg-white/90 backdrop-blur px-4 py-2 rounded-full shadow-sm pointer-events-auto flex items-center gap-2">
-            <div className={`w-4 h-4 rounded-full animate-pulse ${session ? 'bg-green-500' : 'bg-pola-red'}`}></div>
+            <div className="w-4 h-4 bg-pola-red rounded-full animate-pulse"></div>
             <span className="font-mono font-bold tracking-tighter text-sm md:text-base">{t(lang, 'appTitle')}</span>
         </div>
 
         <div className="flex gap-3 pointer-events-auto">
-             {/* Reset Layout */}
              <button 
                 onClick={handleResetLayout}
                 disabled={floatingPhotos.length === 0}
@@ -281,26 +280,6 @@ function App() {
                 <LayoutGrid size={20} />
              </button>
 
-             {/* Auth Button */}
-             {session ? (
-                 <button 
-                   onClick={handleLogout}
-                   className="bg-black text-white p-2 rounded-full shadow-sm w-10 h-10 flex items-center justify-center hover:scale-110 transition-transform"
-                   title="Logout"
-                 >
-                    <LogOut size={18} />
-                 </button>
-             ) : (
-                 <button 
-                   onClick={() => setShowAuthModal(true)}
-                   className="bg-white/90 backdrop-blur text-gray-800 p-2 rounded-full shadow-sm w-10 h-10 flex items-center justify-center hover:scale-110 transition-transform"
-                   title="Login"
-                 >
-                    <User size={18} />
-                 </button>
-             )}
-
-             {/* Language */}
              <button 
                onClick={toggleLang}
                className="bg-white/90 backdrop-blur p-2 rounded-full shadow-sm text-sm font-bold w-10 h-10 flex items-center justify-center hover:scale-110 transition-transform"
@@ -308,7 +287,6 @@ function App() {
                {lang === 'en' ? '中' : 'En'}
              </button>
              
-             {/* View Switch */}
              <button 
                 onClick={() => setCurrentView(v => v === 'camera' ? 'gallery' : 'camera')}
                 className={`p-2 rounded-full shadow-sm w-10 h-10 flex items-center justify-center transition-all hover:scale-110
@@ -325,24 +303,20 @@ function App() {
         
         {/* Gallery View */}
         {currentView === 'gallery' && (
-          <div className="absolute inset-0 z-20 bg-[#e0dfd5]/95 backdrop-blur-sm overflow-y-auto animate-fade-in pt-20 pb-40">
-              <div className="max-w-6xl mx-auto px-4">
-                  <div className="flex justify-between items-end mb-8 border-b border-gray-400/30 pb-4">
-                    <div>
-                        <h2 className="text-3xl md:text-4xl font-bold text-gray-800 font-mono tracking-tighter">{t(lang, 'galleryTitle')}</h2>
-                        <div className="flex items-center gap-2 mt-2">
-                            {session && <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-mono">Cloud Sync Active</span>}
-                            {!session && <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-full font-mono">Guest Mode (Local)</span>}
-                        </div>
-                    </div>
-                    <span className="font-mono text-xs md:text-sm">{photos.length} {t(lang, 'memories')}</span>
-                  </div>
-                  <Gallery photos={photos} onToggle={handleToggleSave} />
-              </div>
+          <div className="absolute inset-0 z-20 bg-[#f4f2ef] overflow-y-auto animate-fade-in scroll-smooth">
+             <Gallery 
+                photos={photos} 
+                onToggle={handleToggleSave} 
+                userProfile={userProfile}
+                lang={lang}
+                onLogin={() => setShowAuthModal(true)}
+                onLogout={() => supabase.auth.signOut()}
+                onEditProfile={() => setShowEditProfileModal(true)}
+             />
           </div>
         )}
 
-        {/* Floating Photos */}
+        {/* Floating Photos (Only visible in Camera view) */}
         {currentView === 'camera' && floatingPhotos.map((photo) => (
           <DraggablePhoto 
             key={photo.id} 
@@ -352,11 +326,11 @@ function App() {
             onFocus={handleBringToFront}
             onDelete={handleDeleteFloating}
             onSave={handleToggleSave}
-            onReset={() => handleResetSinglePhoto(photo.id)} 
+            onReset={() => handleResetSinglePhoto(photo.id)}
           />
         ))}
 
-        {/* Camera */}
+        {/* Camera (Always at bottom) */}
         <div className="absolute bottom-0 left-0 right-0 z-10 flex flex-col items-center justify-end pointer-events-none">
             <div className="w-full flex justify-center transform translate-y-4 md:translate-y-0 transition-transform">
                 <Camera 
@@ -369,13 +343,26 @@ function App() {
 
       </main>
 
-      {/* Editor Modal */}
+      {/* Modals */}
       {selectedFile && (
         <PhotoEditor 
           file={selectedFile} 
           onConfirm={handlePrint} 
           onCancel={() => setSelectedFile(null)} 
           lang={lang}
+        />
+      )}
+
+      {showAuthModal && (
+        <AuthModal onClose={() => setShowAuthModal(false)} lang={lang} />
+      )}
+
+      {showEditProfileModal && userProfile && (
+        <EditProfileModal 
+          profile={userProfile} 
+          lang={lang} 
+          onClose={() => setShowEditProfileModal(false)}
+          onUpdate={setUserProfile}
         />
       )}
     </div>

@@ -57,3 +57,11 @@ export interface CameraState {
   isPrinting: boolean;
   lastPhotoId: string | null;
 }
+
+export interface UserProfile {
+  id: string;
+  username: string;
+  avatar_url?: string;
+  bio?: string;
+  updated_at?: string;
+}
