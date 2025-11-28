@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
 import { X, Mail, Lock, Loader2 } from 'lucide-react';
@@ -23,11 +24,19 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, lang }) => {
     setError(null);
     setMessage(null);
 
+    // Get the current URL (e.g., https://user.github.io/polacam/ or http://localhost:5173/)
+    // This ensures the user comes back to the exact place they registered from.
+    const currentUrl = window.location.origin + window.location.pathname;
+
     try {
       if (isSignUp) {
         const { error } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            // CRITICAL FIX: Tell Supabase to redirect back to THIS app, not localhost:3000
+            emailRedirectTo: currentUrl,
+          },
         });
         if (error) throw error;
         setMessage(lang === 'zh' ? '注册成功！请检查邮箱进行验证。' : 'Success! Check your email to verify.');
