@@ -149,6 +149,32 @@ function App() {
     setFloatingPhotos(prev => prev.filter(p => p.id !== id));
   };
 
+  const handleResetSinglePhoto = (id: string) => {
+    // Reset specific photo to standard scale/rotation and keep onscreen
+    const isMobile = window.innerWidth < 768;
+    const cardWidth = isMobile ? 180 : 280;
+    
+    setFloatingPhotos(prev => prev.map(p => {
+        if (p.id !== id) return p;
+        
+        // Ensure it's not offscreen
+        let newX = p.x;
+        let newY = p.y;
+        if (newX < 0) newX = 10;
+        if (newX > window.innerWidth - cardWidth) newX = window.innerWidth - cardWidth - 10;
+        if (newY < 80) newY = 80;
+        if (newY > window.innerHeight - 200) newY = window.innerHeight - 300;
+
+        return {
+            ...p,
+            x: newX,
+            y: newY,
+            rotation: 0,
+            scale: 1
+        };
+    }));
+  };
+
   const handleResetLayout = () => {
     // Organize in a neat grid centered on screen
     const isMobile = window.innerWidth < 768;
@@ -156,15 +182,17 @@ function App() {
     const cardH = isMobile ? 220 : 340; // Approx height
     
     const viewportW = window.innerWidth;
-    const cols = isMobile ? 2 : Math.floor((viewportW - 40) / (cardW + 20));
+    const viewportH = window.innerHeight;
+    
+    // Calculate columns that fit
+    const cols = isMobile ? 2 : Math.max(2, Math.floor((viewportW - 40) / (cardW + 20)));
     
     // Calculate total grid width to center it
     const totalGridW = cols * cardW + (cols - 1) * 20;
-    const startX = (viewportW - totalGridW) / 2;
+    const startX = Math.max(10, (viewportW - totalGridW) / 2);
     const startY = 100; // Top padding
 
     setFloatingPhotos(prev => {
-        // We create a new array to force state update
         return prev.map((p, index) => {
             const col = index % cols;
             const row = Math.floor(index / cols);
@@ -183,21 +211,33 @@ function App() {
 
   // --- Gallery Handlers ---
 
-  const handleSaveToGallery = async (photo: Photo) => {
-    if (photos.some(p => p.id === photo.id)) return;
-    await savePhoto(photo);
-    setPhotos(prev => [photo, ...prev]);
-    
-    // Fix: Persist the saved state in the floating photo object
-    setFloatingPhotos(prev => prev.map(p => 
-      p.id === photo.id ? { ...p, isSaved: true } : p
-    ));
-  };
+  const handleToggleSave = async (photo: Photo) => {
+    const isAlreadySaved = photos.some(p => p.id === photo.id);
 
-  const handleDeleteFromGallery = async (id: string) => {
-    if (confirm(t(lang, 'confirmDelete'))) {
-      await deletePhoto(id);
-      setPhotos(prev => prev.filter(p => p.id !== id));
+    if (isAlreadySaved) {
+        // Unsave Logic: Remove from storage and gallery
+        try {
+            await deletePhoto(photo.id);
+            setPhotos(prev => prev.filter(p => p.id !== photo.id));
+            // Update floating state to reflect unsaved status
+            setFloatingPhotos(prev => prev.map(p => 
+                p.id === photo.id ? { ...p, isSaved: false } : p
+            ));
+        } catch (e) {
+            console.error("Failed to unsave", e);
+        }
+    } else {
+        // Save Logic: Add to storage and gallery
+        try {
+            await savePhoto(photo);
+            setPhotos(prev => [photo, ...prev]);
+            // Update floating state to reflect saved status
+            setFloatingPhotos(prev => prev.map(p => 
+                p.id === photo.id ? { ...p, isSaved: true } : p
+            ));
+        } catch (e) {
+            console.error("Failed to save", e);
+        }
     }
   };
 
@@ -259,7 +299,8 @@ function App() {
                     <h2 className="text-3xl md:text-4xl font-bold text-gray-800 font-mono tracking-tighter">{t(lang, 'galleryTitle')}</h2>
                     <span className="font-mono text-xs md:text-sm">{photos.length} {t(lang, 'memories')}</span>
                   </div>
-                  <Gallery photos={photos} onDelete={handleDeleteFromGallery} />
+                  {/* Gallery now uses onToggle instead of onDelete for cleaner UI */}
+                  <Gallery photos={photos} onToggle={handleToggleSave} />
               </div>
           </div>
         )}
@@ -273,7 +314,8 @@ function App() {
             onUpdate={handleUpdateFloating}
             onFocus={handleBringToFront}
             onDelete={handleDeleteFloating}
-            onSave={handleSaveToGallery}
+            onSave={handleToggleSave}
+            onReset={() => handleResetSinglePhoto(photo.id)} // Pass reset handler
           />
         ))}
 

@@ -18,6 +18,8 @@ export enum FrameType {
   SQUARE = 'Square', // Classic 1:1
   MINI = 'Mini',     // Portrait (Credit card size)
   WIDE = 'Wide',     // Landscape
+  CINEMA = 'Cinema', // Ultra Wide 21:9
+  PORTRAIT = 'Portrait' // Classic 4:5
 }
 
 export interface EditConfig {

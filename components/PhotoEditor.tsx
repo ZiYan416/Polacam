@@ -15,6 +15,15 @@ interface PhotoEditorProps {
 // Modes for the bottom tab bar
 type Mode = 'frame' | 'crop' | 'filter' | 'text';
 
+// Aspect Ratio Map
+const ASPECT_LABELS: Record<FrameType, string> = {
+    [FrameType.SQUARE]: '1:1',
+    [FrameType.MINI]: '3:4',
+    [FrameType.WIDE]: '16:9',
+    [FrameType.CINEMA]: '21:9',
+    [FrameType.PORTRAIT]: '4:5'
+};
+
 const PhotoEditor: React.FC<PhotoEditorProps> = ({ file, onConfirm, onCancel, lang }) => {
   // --- State ---
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -34,7 +43,6 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({ file, onConfirm, onCancel, la
   // Interaction State
   const isDragging = useRef(false);
   const lastPos = useRef({ x: 0, y: 0 });
-  const [canvasSize, setCanvasSize] = useState({ w: 0, h: 0 });
 
   // 1. Load Image and Set Default Caption
   useEffect(() => {
@@ -43,19 +51,16 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({ file, onConfirm, onCancel, la
     img.src = url;
     img.onload = () => {
        setImage(img);
-       // Fit image initially
-       // We'll calculate fit scale in render or effect, but here we reset defaults
        setRotation(0);
        setPosition({ x: 0, y: 0 });
     };
     
-    // Set default caption (Date or Cute Kaomoji)
+    // Set default caption
     const dateStr = new Date().toLocaleDateString(lang === 'zh' ? 'zh-CN' : 'en-US', { 
         year: 'numeric', 
         month: '2-digit', 
         day: '2-digit' 
     }).replace(/\//g, '.');
-    // 50% chance for date, 50% chance for empty (or you can use random caption)
     setCaption(dateStr);
 
     return () => URL.revokeObjectURL(url);
@@ -65,12 +70,9 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({ file, onConfirm, onCancel, la
   useEffect(() => {
     if (!image) return;
     const dims = FRAME_DIMENSIONS[selectedFrame];
-    // Calculate scale to cover the photo area
     const photoW = dims.photoSize;
-    // Basic cover logic
     const scaleX = photoW / image.width;
-    // const scaleY = (dims.height - dims.topPad - dims.bottomPad) / image.height;
-    const initialScale = Math.max(scaleX, 0.5); // Ensure not too small
+    const initialScale = Math.max(scaleX, 0.5); 
     setScale(initialScale);
   }, [image, selectedFrame]);
 
@@ -110,37 +112,19 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({ file, onConfirm, onCancel, la
     ctx.fillRect(photoX, photoY, photoW, photoH);
 
     // Transforms
-    // 1. Move to Photo Center
     ctx.translate(photoCenterX, photoCenterY);
-    // 2. Apply User Transforms (Pan, Rotate, Scale)
     ctx.translate(position.x, position.y);
     ctx.rotate((rotation * Math.PI) / 180);
     ctx.scale(scale, scale);
-    // 3. Draw Image Centered
     ctx.drawImage(image, -image.width / 2, -image.height / 2);
 
-    // Apply simple canvas filters (preview only, real processing happens in imageProcessing.ts)
-    // Note: context filter property is supported in modern browsers
-    let filterStr = '';
-    if (selectedFilter === FilterType.GRAYSCALE) filterStr = 'grayscale(100%)';
-    else if (selectedFilter === FilterType.SEPIA) filterStr = 'sepia(80%)';
-    else if (selectedFilter === FilterType.VINTAGE) filterStr = 'sepia(40%) contrast(1.2) brightness(0.9)';
-    else if (selectedFilter === FilterType.COOL) filterStr = 'hue-rotate(180deg) saturate(0.8)';
-    
-    // For preview, we can simply apply the filter over the rect if ctx.filter isn't perfect, 
-    // but ctx.filter is good for preview.
-    // However, ctx.filter applies to drawing. We already drew.
-    // So we apply compositing or just rely on CSS for the canvas element? 
-    // No, we want to export eventually. But this is just preview.
-    // Let's use a colored overlay for speed in preview loop.
     if (selectedFilter !== FilterType.NORMAL) {
-        ctx.globalCompositeOperation = 'overlay'; // or 'color', 'multiply' etc
+        ctx.globalCompositeOperation = 'overlay'; 
         ctx.fillStyle = selectedFilter === FilterType.GRAYSCALE ? '#888' 
                       : selectedFilter === FilterType.SEPIA ? '#704214'
                       : selectedFilter === FilterType.VINTAGE ? '#5e4b35'
                       : '#001133';
         
-        // Apply filter overlay
         ctx.globalCompositeOperation = selectedFilter === FilterType.COOL ? 'overlay' : 'color';
         ctx.fillRect(-image.width, -image.height, image.width * 2, image.height * 2);
     }
@@ -194,8 +178,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({ file, onConfirm, onCancel, la
     const dx = clientX - lastPos.current.x;
     const dy = clientY - lastPos.current.y;
     
-    // Adjust pan speed relative to canvas display size vs actual size
-    // If canvas is displayed at 300px but actual is 600px, 1px drag = 2px pan
+    // Adjust pan speed
     const ratio = canvasRef.current ? canvasRef.current.width / canvasRef.current.clientWidth : 1;
     
     setPosition(p => ({ x: p.x + dx * ratio, y: p.y + dy * ratio }));
@@ -206,7 +189,6 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({ file, onConfirm, onCancel, la
     isDragging.current = false;
   };
 
-  // --- Confirm ---
   const handleDone = () => {
       onConfirm({
           x: position.x,
@@ -217,6 +199,26 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({ file, onConfirm, onCancel, la
           filter: selectedFilter,
           frameType: selectedFrame
       });
+  };
+
+  // Helper to render Frame Icon
+  const renderFrameIcon = (type: FrameType) => {
+      const dim = FRAME_DIMENSIONS[type];
+      const aspect = dim.width / dim.height;
+      const w = aspect >= 1 ? 24 : 24 * aspect;
+      const h = aspect >= 1 ? 24 / aspect : 24;
+      
+      return (
+          <div className="flex flex-col items-center gap-2">
+            <div className="w-10 h-10 flex items-center justify-center border border-white/20 rounded bg-white/5 relative">
+                <div style={{ width: w, height: h }} className={`border-2 ${selectedFrame === type ? 'border-white bg-white/50' : 'border-gray-500'}`}></div>
+            </div>
+            <div className="flex flex-col items-center">
+                <span className="text-[10px] font-mono text-white/90">{t(lang, `framesList.${type}`)}</span>
+                <span className="text-[9px] font-mono text-white/50">{ASPECT_LABELS[type]}</span>
+            </div>
+          </div>
+      );
   };
 
   return (
@@ -233,7 +235,7 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({ file, onConfirm, onCancel, la
          </button>
       </div>
 
-      {/* Viewport (Canvas) */}
+      {/* Viewport */}
       <div className="flex-1 relative overflow-hidden bg-[#111] flex items-center justify-center cursor-move"
            onMouseDown={e => handleStart(e.clientX, e.clientY)}
            onMouseMove={e => handleMove(e.clientX, e.clientY)}
@@ -243,14 +245,12 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({ file, onConfirm, onCancel, la
            onTouchMove={e => handleMove(e.touches[0].clientX, e.touches[0].clientY)}
            onTouchEnd={handleEnd}
       >
-          {/* Canvas */}
           <canvas 
             ref={canvasRef} 
             className="max-h-[60vh] max-w-[90vw] shadow-[0_0_50px_rgba(0,0,0,0.5)]"
-            style={{ width: 'auto', height: 'auto' }} // Let layout constrain it
+            style={{ width: 'auto', height: 'auto' }} 
           />
           
-          {/* Overlay Hint */}
           <div className="absolute top-4 pointer-events-none opacity-50 bg-black/40 px-3 py-1 rounded-full text-white text-xs font-mono border border-white/10">
              {t(lang, 'dragHint')}
           </div>
@@ -259,10 +259,10 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({ file, onConfirm, onCancel, la
       {/* Controls Area */}
       <div className="bg-[#1a1a1a] border-t border-white/5 pb-safe">
         
-        {/* Sliders (Contextual) */}
-        <div className="h-16 flex items-center justify-center px-6 border-b border-white/5">
+        {/* Sliders / Options */}
+        <div className="h-24 flex items-center justify-center px-4 border-b border-white/5 overflow-x-auto no-scrollbar">
             {activeMode === 'crop' && (
-                <div className="w-full flex items-center gap-4">
+                <div className="w-full flex items-center gap-4 max-w-md mx-auto">
                     <span className="text-xs text-gray-500 font-mono w-8">ZOOM</span>
                     <input 
                         type="range" min="0.2" max="3" step="0.05" 
@@ -275,8 +275,9 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({ file, onConfirm, onCancel, la
                     </button>
                 </div>
             )}
+            
             {activeMode === 'text' && (
-                 <div className="w-full flex items-center gap-2">
+                 <div className="w-full flex items-center gap-2 max-w-md mx-auto">
                      <input 
                         type="text" value={caption} onChange={e => setCaption(e.target.value)}
                         placeholder={t(lang, 'captionPlaceholder')}
@@ -287,28 +288,28 @@ const PhotoEditor: React.FC<PhotoEditorProps> = ({ file, onConfirm, onCancel, la
                      </button>
                  </div>
             )}
-            {(activeMode === 'frame' || activeMode === 'filter') && (
-                 <div className="text-xs text-gray-500 font-mono">{t(lang, 'dragHint')}</div>
-            )}
-        </div>
 
-        {/* Options Row (Horizontal Scroll) */}
-        <div className="h-20 flex items-center gap-3 overflow-x-auto px-4 no-scrollbar">
-            {activeMode === 'frame' && Object.values(FrameType).map(f => (
-                <button key={f} onClick={() => setSelectedFrame(f)} 
-                    className={`flex-shrink-0 px-4 py-2 rounded-lg border text-sm font-mono transition-all ${selectedFrame === f ? 'bg-white text-black border-white' : 'text-gray-400 border-white/10'}`}
-                >
-                    {t(lang, `framesList.${f}`)}
-                </button>
-            ))}
+            {activeMode === 'frame' && (
+                <div className="flex gap-4">
+                   {Object.values(FrameType).map(f => (
+                       <button key={f} onClick={() => setSelectedFrame(f)} className={`opacity-${selectedFrame === f ? '100' : '50'} hover:opacity-100 transition-opacity`}>
+                           {renderFrameIcon(f)}
+                       </button>
+                   ))}
+                </div>
+            )}
             
-            {activeMode === 'filter' && Object.values(FilterType).map(f => (
-                <button key={f} onClick={() => setSelectedFilter(f)} 
-                    className={`flex-shrink-0 px-4 py-2 rounded-full border text-sm font-mono transition-all ${selectedFilter === f ? 'bg-pola-accent text-black border-pola-accent' : 'text-gray-400 border-white/10'}`}
-                >
-                    {t(lang, `filtersList.${f}`)}
-                </button>
-            ))}
+            {activeMode === 'filter' && (
+                <div className="flex gap-2">
+                    {Object.values(FilterType).map(f => (
+                        <button key={f} onClick={() => setSelectedFilter(f)} 
+                            className={`flex-shrink-0 px-4 py-2 rounded-full border text-sm font-mono transition-all ${selectedFilter === f ? 'bg-pola-accent text-black border-pola-accent' : 'text-gray-400 border-white/10'}`}
+                        >
+                            {t(lang, `filtersList.${f}`)}
+                        </button>
+                    ))}
+                </div>
+            )}
         </div>
 
         {/* Tab Bar */}

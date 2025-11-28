@@ -3,13 +3,14 @@ import React from 'react';
 import { Photo } from '../types';
 import PhotoCard from './PhotoCard';
 import { Camera as CameraIcon } from 'lucide-react';
+import { t } from '../locales'; // Importing t for translations if needed, though not strictly used in loop
 
 interface GalleryProps {
   photos: Photo[];
-  onDelete: (id: string) => void;
+  onToggle: (photo: Photo) => void;
 }
 
-const Gallery: React.FC<GalleryProps> = ({ photos, onDelete }) => {
+const Gallery: React.FC<GalleryProps> = ({ photos, onToggle }) => {
   if (photos.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-gray-400 opacity-60 min-h-[50vh]">
@@ -27,9 +28,7 @@ const Gallery: React.FC<GalleryProps> = ({ photos, onDelete }) => {
       {photos.map((photo, index) => (
         <div key={photo.id} className="flex justify-center relative group">
              {/* 
-                Fix: Removed 'isolate'. Added 'group-hover:z-[50]' to the inner wrapper.
-                This ensures the hovered card is physically on top of neighbors in the stacking context,
-                allowing buttons to be clicked.
+                Group hover z-index ensures the active card is on top for interaction
              */}
             <div 
               className="relative transition-all duration-300 z-0 group-hover:z-[50] group-hover:scale-105 group-hover:rotate-0"
@@ -37,7 +36,8 @@ const Gallery: React.FC<GalleryProps> = ({ photos, onDelete }) => {
             >
                 <PhotoCard 
                   photo={photo} 
-                  onDelete={onDelete} 
+                  onSave={onToggle}  // Use onSave to trigger toggle
+                  isSaved={true}     // Always saved in gallery view
                   className="w-full max-w-[170px] md:max-w-[280px]" 
                 />
             </div>

@@ -62,14 +62,14 @@ const PhotoCard: React.FC<PhotoCardProps> = ({
           {onSave && (
              <button 
                 onClick={handleSave}
-                disabled={isSaved}
+                // Removed disabled={isSaved} to allow toggling off
                 className={`w-9 h-9 md:w-10 md:h-10 rounded-full border shadow-md flex items-center justify-center transition-transform hover:scale-110 active:scale-95
                   ${isSaved 
                     ? 'bg-red-50 border-red-200 text-pola-red' 
                     : 'bg-white border-gray-200 text-gray-400 hover:text-pola-red'
                   }
                 `}
-                title="收藏"
+                title="收藏 / 取消收藏"
              >
                 <Heart size={18} fill={isSaved ? "currentColor" : "none"} />
              </button>

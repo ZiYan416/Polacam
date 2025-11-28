@@ -32,6 +32,7 @@ export const translations = {
     frameLabel: "VIEWFINDER",
     dragHint: "Drag / Pinch",
     resetLayout: "Tidy Up",
+    resetTransform: "Reset",
     nav: {
       camera: "Cam",
       gallery: "Vibes"
@@ -51,9 +52,11 @@ export const translations = {
       Cool: "Chill"
     },
     framesList: {
-      Square: "Classic",
-      Mini: "Instax",
-      Wide: "Wide"
+      Square: "Square",
+      Mini: "Mini",
+      Wide: "Wide",
+      Cinema: "Cinema",
+      Portrait: "Portrait"
     },
     presets: [
       "Core Memory 🔒", "Main Character Energy ✨", "Touch Grass 🌿", "Chaos Mode ⚡️", "Vibe Check",
@@ -85,6 +88,7 @@ export const translations = {
     frameLabel: "取景框",
     dragHint: "拖拽 / 双指缩放",
     resetLayout: "整理桌面",
+    resetTransform: "重置位置",
     nav: {
       camera: "拍摄",
       gallery: "相册"
@@ -106,7 +110,9 @@ export const translations = {
     framesList: {
       Square: "经典方",
       Mini: "三寸",
-      Wide: "宽幅"
+      Wide: "宽幅",
+      Cinema: "电影感",
+      Portrait: "肖像"
     },
     presets: [
       "今日份甜 🍭", "这是什么神仙滤镜", "保持热爱 奔赴山海", "落日归山海 🌄", "碎片 +1",

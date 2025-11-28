@@ -7,7 +7,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FloatingPhoto, Photo } from '../types';
 import PhotoCard from './PhotoCard';
-import { RotateCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 
 interface DraggablePhotoProps {
   photo: FloatingPhoto;
@@ -16,6 +16,7 @@ interface DraggablePhotoProps {
   onFocus: (id: string) => void;
   onDelete: (id: string) => void;
   onSave: (photo: Photo) => void;
+  onReset?: (id: string) => void;
 }
 
 const DraggablePhoto: React.FC<DraggablePhotoProps> = ({ 
@@ -24,10 +25,9 @@ const DraggablePhoto: React.FC<DraggablePhotoProps> = ({
   onUpdate, 
   onFocus,
   onDelete, 
-  onSave 
+  onSave,
+  onReset
 }) => {
-  // Fix: Removed local isSaved state. We now rely on photo.isSaved from App level state.
-  
   // Animation Phase for new photos: Eject -> Fly -> Idle
   const [isEjecting, setIsEjecting] = useState(!!photo.isNew);
   const [ejectOffsetY, setEjectOffsetY] = useState(0);
@@ -38,7 +38,6 @@ const DraggablePhoto: React.FC<DraggablePhotoProps> = ({
   
   // Refs for gesture calculations
   const dragStart = useRef({ x: 0, y: 0 });
-  const rotateStart = useRef({ angle: 0, mouseAngle: 0 });
   const pinchStart = useRef({ dist: 0, angle: 0, scale: 1, rotation: 0 });
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -155,67 +154,21 @@ const DraggablePhoto: React.FC<DraggablePhotoProps> = ({
   const handleWheel = (e: React.WheelEvent) => {
     if (!isInteracting) return;
     e.stopPropagation();
-    // e.preventDefault() is handled by passive: false if we attached natively, 
-    // but React events are passive by default. 
-    // We update scale based on deltaY.
     const delta = -e.deltaY * 0.001;
     const newScale = Math.min(Math.max(photo.scale + delta, 0.5), 1.5);
     onUpdate(photo.id, { scale: newScale });
   };
 
-  // --- Rotate Handle Logic ---
-  const handleRotateStart = (e: React.MouseEvent | React.TouchEvent) => {
-    e.stopPropagation();
-    const clientX = 'touches' in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
-    
-    if (cardRef.current) {
-        const rect = cardRef.current.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-        const startAngle = Math.atan2(clientY - centerY, clientX - centerX) * (180 / Math.PI);
-        
-        rotateStart.current = { angle: photo.rotation, mouseAngle: startAngle };
-        
-        const moveHandler = (moveEvent: MouseEvent | TouchEvent) => {
-            const mx = 'touches' in moveEvent ? moveEvent.touches[0].clientX : (moveEvent as MouseEvent).clientX;
-            const my = 'touches' in moveEvent ? moveEvent.touches[0].clientY : (moveEvent as MouseEvent).clientY;
-            const currentAngle = Math.atan2(my - centerY, mx - centerX) * (180 / Math.PI);
-            const delta = currentAngle - rotateStart.current.mouseAngle;
-            onUpdate(photo.id, { rotation: rotateStart.current.angle + delta });
-        };
-        
-        const upHandler = () => {
-            window.removeEventListener('mousemove', moveHandler as any);
-            window.removeEventListener('mouseup', upHandler);
-            window.removeEventListener('touchmove', moveHandler as any);
-            window.removeEventListener('touchend', upHandler);
-        };
-
-        window.addEventListener('mousemove', moveHandler as any);
-        window.addEventListener('mouseup', upHandler);
-        window.addEventListener('touchmove', moveHandler as any);
-        window.addEventListener('touchend', upHandler);
-    }
-  };
-
-
   // --- Styles ---
-  
-  // Calculate Responsive Width
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
   const baseWidth = isMobile ? 180 : 280;
 
-  // Render Position
-  // If isNew (Ejecting), we start at initialOrigin (Camera Slot) + offsetY
-  // If Idle, we use photo.x / photo.y
   const x = isEjecting ? initialOrigin.x : photo.x;
   const y = isEjecting ? (initialOrigin.y + ejectOffsetY) : photo.y;
   
-  // Transition
   const transition = isDragging ? 'none' : 
                      isEjecting ? 'transform 1s cubic-bezier(0.25, 1, 0.5, 1), clip-path 1s ease' : 
-                     'transform 0.3s ease-out'; // Smooth settle
+                     'transform 0.3s ease-out';
 
   const clipPath = isEjecting 
       ? (ejectOffsetY === 0 ? 'inset(0 0 100% 0)' : 'inset(0 0 0% 0)') 
@@ -241,15 +194,20 @@ const DraggablePhoto: React.FC<DraggablePhotoProps> = ({
         onWheel={handleWheel}
     >
       
-      {/* Rotation Handle (Visible on Hover/Interact) */}
+      {/* Interaction Controls (Visible on Hover/Interact) */}
       {!isEjecting && isInteracting && (
-        <div 
-            className="absolute -top-12 left-1/2 -translate-x-1/2 w-8 h-8 bg-white border border-gray-300 rounded-full shadow-md flex items-center justify-center cursor-ew-resize z-50 animate-fade-in text-gray-600 hover:text-pola-accent hover:border-pola-accent"
-            onMouseDown={handleRotateStart}
-            onTouchStart={handleRotateStart}
-        >
-            <RotateCw size={16} />
-        </div>
+        <>
+            {/* Reset Button (Top Right corner relative to card) */}
+            {onReset && (
+                <button
+                    onClick={(e) => { e.stopPropagation(); onReset(photo.id); }}
+                    className="absolute -top-8 -right-4 w-8 h-8 bg-white border border-gray-300 rounded-full shadow-md flex items-center justify-center cursor-pointer z-50 animate-fade-in text-gray-600 hover:text-pola-accent hover:border-pola-accent"
+                    title="Reset Transform"
+                >
+                    <RefreshCw size={16} />
+                </button>
+            )}
+        </>
       )}
 
       {/* Visual Feedback for Selection */}
@@ -257,9 +215,9 @@ const DraggablePhoto: React.FC<DraggablePhotoProps> = ({
         <PhotoCard 
             photo={photo} 
             onDelete={onDelete} 
-            onSave={onSave} // Pass event up, parent App.tsx updates isSaved state
-            isDeveloping={isEjecting} // Use ejecting phase to show developing filter
-            isSaved={photo.isSaved} // Use saved state from props
+            onSave={onSave} 
+            isDeveloping={isEjecting} 
+            isSaved={photo.isSaved} 
             className={isInteracting ? 'shadow-2xl ring-2 ring-white/50 ring-offset-2 ring-offset-transparent' : ''}
         />
       </div>
