@@ -27,11 +27,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: 'npm'
+          # cache: 'npm' # Disable cache to prevent locking to wrong platform binaries
       
       - name: Install dependencies
-        run: npm install
-        # If npm ci fails, try: npm install
+        # FORCE CLEAN INSTALL: Delete lock file to ensure Linux binaries (rollup) are downloaded
+        run: |
+          rm -rf package-lock.json node_modules
+          npm install
 
       - name: Build
         run: npm run build
