@@ -18,8 +18,8 @@ import { generatePolaroid } from './services/imageProcessing';
 import { savePhoto, getPhotos, deletePhoto } from './services/storageService';
 import { getProfile } from './services/userService';
 import { supabase } from './supabaseClient';
-import { Photo, EditConfig, Language, FloatingPhoto, UserProfile } from './types';
-import { Grid, Camera as CameraIcon, Sparkles, LayoutGrid, Sun, Moon } from 'lucide-react';
+import { Photo, EditConfig, Language, FloatingPhoto, UserProfile, CameraSkin } from './types';
+import { Grid, Camera as CameraIcon, Sparkles, LayoutGrid, Sun, Moon, Palette } from 'lucide-react';
 import { t } from './locales';
 
 type View = 'camera' | 'gallery';
@@ -40,8 +40,11 @@ const AmbientText = ({ lang }: { lang: Language }) => {
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 select-none overflow-hidden">
        <div key={textIndex} className="animate-fade-in text-center opacity-10 dark:opacity-5 transition-opacity duration-500">
-          <h2 className="text-4xl md:text-8xl lg:text-9xl font-black text-zinc-900 dark:text-zinc-100 tracking-tighter uppercase whitespace-nowrap scale-105 transform">
-            {texts[textIndex]}
+          <h2 className="text-4xl md:text-8xl lg:text-9xl font-black text-pola-kraft dark:text-zinc-100 tracking-tighter uppercase whitespace-nowrap scale-105 transform">
+             <span className="flex items-center gap-4 justify-center">
+               <Sparkles size={48} className="text-yellow-500/50" />
+               {texts[textIndex]}
+             </span>
           </h2>
        </div>
     </div>
@@ -56,6 +59,7 @@ function App() {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [lang, setLang] = useState<Language>('zh'); 
   const [currentView, setCurrentView] = useState<View>('camera');
+  const [currentSkin, setCurrentSkin] = useState<CameraSkin>('original');
   
   const [showGuide, setShowGuide] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -132,6 +136,14 @@ function App() {
   const toggleLang = () => setLang(prev => prev === 'en' ? 'zh' : 'en');
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
 
+  const toggleSkin = () => {
+    const skins: CameraSkin[] = ['original', 'crimson', 'silver', 'alpha', 'lumix'];
+    const currentIndex = skins.indexOf(currentSkin);
+    const nextSkin = skins[(currentIndex + 1) % skins.length];
+    setCurrentSkin(nextSkin);
+    setNotification(`${t(lang, `skins.${nextSkin}` as any)}`);
+  };
+
   const getEjectOrigin = () => {
     const isMobile = window.innerWidth < 768;
     const cardWidth = isMobile ? 180 : 280;
@@ -171,7 +183,7 @@ function App() {
       zIndexCounter.current += 1;
 
       const newPhoto: FloatingPhoto = {
-        id: Date.now().toString(),
+        id: crypto.randomUUID(), // Fix: Use UUID for Supabase compatibility
         dataUrl,
         originalUrl: URL.createObjectURL(fileToProcess),
         createdAt: Date.now(),
@@ -315,6 +327,15 @@ function App() {
                 <LayoutGrid size={20} />
              </button>
 
+             {/* Skin Toggle */}
+             <button 
+                onClick={toggleSkin}
+                className="bg-white/90 dark:bg-zinc-800/80 backdrop-blur p-2 rounded-full shadow-sm text-gray-600 dark:text-zinc-200 transition-all hover:scale-110"
+                title="Change Skin"
+             >
+                 <Palette size={20} />
+             </button>
+
              {/* Theme Toggle */}
              <button 
                 onClick={toggleTheme}
@@ -381,6 +402,7 @@ function App() {
                    onCapture={handleCaptureInit} 
                    isProcessing={isProcessing} 
                    lang={lang}
+                   skin={currentSkin}
                 />
             </div>
         </div>

@@ -58,6 +58,13 @@ export const translations = {
       Cinema: "Cinema",
       Portrait: "Portrait"
     },
+    skins: {
+      original: "Classic",
+      crimson: "EOS Red",
+      silver: "Retro Silver",
+      alpha: "Alpha Orange",
+      lumix: "Lumi Gold"
+    },
     profile: {
       guest: "Guest Photographer",
       guestDesc: "Photos are stored locally on this device.",
@@ -139,6 +146,13 @@ export const translations = {
       Wide: "宽幅",
       Cinema: "电影感",
       Portrait: "肖像"
+    },
+    skins: {
+      original: "经典白",
+      crimson: "佳能红",
+      silver: "富士银",
+      alpha: "阿尔法橙",
+      lumix: "松下金"
     },
     profile: {
       guest: "路过的摄影师",

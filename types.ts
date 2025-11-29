@@ -22,6 +22,8 @@ export enum FrameType {
   PORTRAIT = 'Portrait' // Classic 4:5
 }
 
+export type CameraSkin = 'original' | 'crimson' | 'silver' | 'alpha' | 'lumix';
+
 export interface EditConfig {
   x: number;       // Offset X in pixels relative to frame center
   y: number;       // Offset Y in pixels relative to frame center
