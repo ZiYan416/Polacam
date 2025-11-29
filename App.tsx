@@ -37,7 +37,7 @@
     }, [lang]);
 
     return (
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 select-none overflow-hidden">
+      <div className="absolute inset-0 flex items-start justify-center pointer-events-none z-0 select-none overflow-hidden">
         <div key={textIndex} className="animate-fade-in text-center transition-opacity duration-500">
             {/* 
                 Visual Update:
@@ -51,7 +51,7 @@
             */}
             <h2 className="text-4xl md:text-8xl lg:text-9xl font-black tracking-tighter uppercase whitespace-nowrap transform text-white/50 drop-shadow-sm dark:text-zinc-800 dark:drop-shadow-none">
               <span className="flex flex-col items-center gap-6 justify-center">
-                <Sparkles size={180} className="text-[#d6c0a0] mb-2 dark:opacity-60" />
+                <Sparkles size={140} className="text-[#FAFAD2] mb-2 dark:opacity-60" />
                 <span>{texts[textIndex]}</span>
               </span>
             </h2>
