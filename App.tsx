@@ -1,4 +1,3 @@
-
   /**
    * @file App.tsx
    * @description Main Controller. Manages persistent floating state and user profiles.
@@ -37,23 +36,19 @@
       return () => clearInterval(interval);
     }, [lang]);
 
+
     return (
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 select-none overflow-hidden">
         <div key={textIndex} className="animate-fade-in text-center transition-opacity duration-500">
             {/* 
                 Visual Update:
-                1. Text Color:
-                   - Day: text-white/50 + drop-shadow-sm for "Engraved Watermark" look.
-                   - Night: text-zinc-800 for "Deep Background" look.
-                2. Star Color:
-                   - Keep #d6c0a0 (Kraft).
-                   - Day: opacity-100.
-                   - Night: opacity-60 for subtleness.
+                - Day: text-[#d6c0a0]/25 (Subtle Kraft) for a warm watermark look.
+                - Night: text-zinc-800 for deep industrial background.
             */}
-            <h2 className="text-4xl md:text-8xl lg:text-9xl font-black tracking-tighter uppercase whitespace-nowrap transform text-[#d6c0a0] drop-shadow-sm dark:drop-shadow-none">
-              <span className="flex flex-col items-center gap-4 md:gap-8 justify-center">
-                {/* Responsive sizing for the star: w-28 (7rem/112px) on mobile, scaling up to w-56 (14rem/224px) on desktop */}
-                <Sparkles className="w-28 h-28 md:w-44 md:h-44 lg:w-56 lg:h-56 text-[#d6c0a0] mb-2 dark:opacity-60 transition-all duration-500" />
+            <h2 className="text-4xl md:text-8xl lg:text-9xl font-black tracking-tighter uppercase whitespace-nowrap transform text-[#d6c0a0]/25 drop-shadow-sm dark:text-zinc-800 dark:drop-shadow-none">
+              <span className="flex flex-col items-center gap-4 justify-center">
+                {/* Responsive Star Size: Slightly smaller than text */}
+                <Sparkles className="w-8 h-8 md:w-28 md:h-28 text-[#ffe974] mb-2 dark:opacity-40 transition-all duration-300" />
                 <span>{texts[textIndex]}</span>
               </span>
             </h2>
