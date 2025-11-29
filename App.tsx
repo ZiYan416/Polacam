@@ -51,7 +51,7 @@
             */}
             <h2 className="text-4xl md:text-8xl lg:text-9xl font-black tracking-tighter uppercase whitespace-nowrap transform text-white/50 drop-shadow-sm dark:text-zinc-800 dark:drop-shadow-none">
               <span className="flex flex-col items-center gap-6 justify-center">
-                <Sparkles size={140} className="text-[#ffdd27] mb-2 dark:opacity-60" />
+                <Sparkles size={100} className="text-[#ffe974] mb-2 dark:opacity-60" />
                 <span>{texts[textIndex]}</span>
               </span>
             </h2>
