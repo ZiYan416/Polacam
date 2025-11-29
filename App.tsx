@@ -39,10 +39,16 @@
     return (
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 select-none overflow-hidden">
         <div key={textIndex} className="animate-fade-in text-center transition-opacity duration-500">
-            <h2 className="text-4xl md:text-8xl lg:text-9xl font-black text-pola-kraft dark:text-zinc-200 tracking-tighter uppercase whitespace-nowrap scale-105 transform opacity-30 dark:opacity-10">
-              <span className="flex flex-col items-center gap-2 justify-center">
-                <Sparkles size={120} className="text-pola-kraft dark:text-zinc-500 mb-4 opacity-80" />
-                {texts[textIndex]}
+            {/* 
+                Visual Update:
+                1. text-[#d6c0a0] ensures explicit Kraft color application.
+                2. flex-col puts the Star ABOVE the text.
+                3. Sparkles size increased to 180.
+            */}
+            <h2 className="text-4xl md:text-8xl lg:text-9xl font-black tracking-tighter uppercase whitespace-nowrap transform opacity-40 dark:opacity-10">
+              <span className="flex flex-col items-center gap-6 justify-center">
+                <Sparkles size={180} className="text-[#d6c0a0] dark:text-zinc-600 mb-2 opacity-90" />
+                <span className="text-[#d6c0a0] dark:text-zinc-800/50">{texts[textIndex]}</span>
               </span>
             </h2>
         </div>
