@@ -41,14 +41,18 @@
         <div key={textIndex} className="animate-fade-in text-center transition-opacity duration-500">
             {/* 
                 Visual Update:
-                1. text-[#d6c0a0] ensures explicit Kraft color application.
-                2. flex-col puts the Star ABOVE the text.
-                3. Sparkles size increased to 180.
+                1. Text Color:
+                   - Day: text-white/50 + drop-shadow-sm for "Engraved Watermark" look.
+                   - Night: text-zinc-800 for "Deep Background" look.
+                2. Star Color:
+                   - Keep #d6c0a0 (Kraft).
+                   - Day: opacity-100.
+                   - Night: opacity-60 for subtleness.
             */}
-            <h2 className="text-4xl md:text-8xl lg:text-9xl font-black tracking-tighter uppercase whitespace-nowrap transform opacity-40 dark:opacity-10">
+            <h2 className="text-4xl md:text-8xl lg:text-9xl font-black tracking-tighter uppercase whitespace-nowrap transform text-white/50 drop-shadow-sm dark:text-zinc-800 dark:drop-shadow-none">
               <span className="flex flex-col items-center gap-6 justify-center">
-                <Sparkles size={180} className="text-[#d6c0a0] dark:text-zinc-600 mb-2 opacity-90" />
-                <span className="text-[#d6c0a0] dark:text-zinc-800/50">{texts[textIndex]}</span>
+                <Sparkles size={180} className="text-[#d6c0a0] mb-2 dark:opacity-60" />
+                <span>{texts[textIndex]}</span>
               </span>
             </h2>
         </div>
